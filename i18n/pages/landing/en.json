@@ -1,0 +1,59 @@
+{
+  "template": "shipany-template-one",
+  "theme": "light",
+  "header": {
+    "brand": {
+      "title": "Eson Wang",
+      "logo": {
+        "src": "/logo.png",
+        "alt": "Eson Wang"
+      },
+      "url": "/"
+    },
+    "nav": {
+      "items": [
+        {
+          "title": "Blog",
+          "url": "/posts",
+          "icon": "RiQuillPenLine"
+
+        },
+        {
+          "title": "About",
+          "url": "/about",
+          "icon": "RiEmotionHappyLine"
+        }
+      ]
+    },
+    "show_sign": false,
+    "show_theme": true,
+    "show_locale": false
+  },
+  "blog": {
+    "name": "blog",
+    "title": "Latest Blog",
+    "description": "Latest updates and insights from our blog.",
+    "read_more_text": "Read more"
+  },
+  "footer": {
+    "name": "footer",
+    "copyright": "© 2025 • Eson Wang All rights reserved.",
+    "show_sign": true,
+    "social": {
+      "items": [
+        {
+          "title": "X",
+          "icon": "RiTwitterXFill",
+          "url": "https://x.com/wang_eson",
+          "target": "_blank"
+        },
+        {
+          "title": "Email",
+          "icon": "RiMailLine",
+          "url": "mailto:esonwang@outlook.com",
+          "target": "_self"
+        }
+      ]
+    }
+  }
+}

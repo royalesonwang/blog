@@ -1,0 +1,335 @@
+/* 覆盖编辑器的默认样式 */
+.mdxeditor {
+  --md-editor-bg-color: transparent !important;
+  --md-editor-font: ui-sans-serif, system-ui, sans-serif;
+  
+  /* 匹配 Shadcn UI 输入框 */
+  border: 1px solid hsl(var(--input));
+  border-radius: var(--radius);
+  background-color: hsl(var(--background));
+  
+  overflow: hidden;
+  min-height: 500px;
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+/* 编辑区域样式 */
+.mdxeditor [data-lexical-editor] {
+  background-color: transparent;
+  padding: 1rem;
+}
+
+/* 强制覆盖工具栏样式 */
+.mdxeditor .toolbar,
+.mdxeditor [role="toolbar"] {
+  border-bottom: 1px solid hsl(var(--input)) !important;
+  background-color: hsl(var(--background)) !important;
+  padding: 0.5rem;
+}
+
+/* 自定义工具栏按钮 */
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: inherit;
+  cursor: pointer;
+}
+
+.toolbar-btn:hover {
+  background-color: hsl(var(--muted-foreground) / 0.1);
+}
+
+/* 移除特定元素的背景色 - 模式选择器 */
+.mdxeditor div[style*="margin-left:auto"][style*="position:sticky"][style*="right:0"] {
+  background-color: transparent !important;
+}
+
+/* 覆盖所有下拉菜单和选择器背景 */
+.mdxeditor [role="combobox"],
+.mdxeditor .dropdown-container,
+.mdxeditor .select,
+.mdxeditor [role="listbox"],
+.mdxeditor [role="menu"],
+.mdxeditor [data-radix-popper-content-wrapper],
+.mdxeditor .toolbar-toggle,
+.mdxeditor .popup-container,
+.mdxeditor [data-view-mode-selector] {
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--input)) !important;
+}
+
+/* 修复模式选择器按钮 */
+.mdxeditor [data-view-mode-selector] button {
+  background-color: transparent !important;
+}
+
+/* 调整视图模式选择器的下拉菜单 */
+.mdxeditor [data-radix-popper-content-wrapper] div {
+  background-color: hsl(var(--background)) !important;
+}
+
+/* 添加工具栏按钮之间的分隔 */
+.mdxeditor .toolbar .divider,
+.mdxeditor [role="toolbar"] .divider {
+  width: 1px;
+  background-color: hsl(var(--input));
+  align-self: stretch;
+  margin: 0 0.25rem;
+}
+
+/* 改进选中文本的颜色样式 */
+.mdxeditor [data-lexical-editor] ::selection {
+  background-color: hsl(215, 70%, 40%, 0.3) !important;
+}
+
+.mdxeditor [data-lexical-editor] ::-moz-selection {
+  background-color: hsl(215, 70%, 40%, 0.3) !important;
+}
+
+/* 修复列表样式 */
+.mdxeditor [data-lexical-editor] ul {
+  list-style-type: disc !important;
+  padding-left: 2rem !important;
+  margin: 1rem 0 !important;
+}
+
+.mdxeditor [data-lexical-editor] ol {
+  list-style-type: decimal !important;
+  padding-left: 2rem !important;
+  margin: 1rem 0 !important;
+}
+
+.mdxeditor [data-lexical-editor] li {
+  display: list-item !important;
+  margin: 0.25rem 0 !important;
+}
+
+.mdxeditor [data-lexical-editor] li > ul, 
+.mdxeditor [data-lexical-editor] li > ol {
+  margin: 0.25rem 0 !important;
+}
+
+.mdxeditor [data-lexical-editor] li::marker {
+  color: hsl(var(--foreground)) !important;
+}
+
+.mdxeditor h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin-top: 0.67em;
+  margin-bottom: 0.67em;
+}
+
+.mdxeditor h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-top: 0.83em;
+  margin-bottom: 0.83em;
+}
+
+.mdxeditor h3 {
+  font-size: 1.17em;
+  font-weight: bold;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.mdxeditor h4 {
+  font-weight: bold;
+  margin-top: 1.33em;
+  margin-bottom: 1.33em;
+}
+
+/* 聚焦状态 - 匹配 Shadcn UI 输入框的聚焦样式 */
+.mdxeditor:focus-within {
+  outline: none;
+  ring: 2px solid hsl(var(--ring));
+  ring-offset: 2px;
+}
+
+/* 工具栏按钮悬停效果 */
+.mdxeditor .toolbar button:hover,
+.mdxeditor [role="toolbar"] button:hover {
+  background-color: hsl(var(--muted-foreground) / 0.1);
+}
+
+/* 确保列表正确显示的额外类 */
+.md-list-fix ul, .md-list-fix ol {
+  list-style-position: outside !important;
+  visibility: visible !important;
+}
+
+/* 代码块样式 */
+.mdxeditor .code-block {
+  border-radius: var(--radius);
+  background-color: hsl(var(--code-bg)) !important;
+  font-family: Consolas, monospace;
+  margin: 2.5rem 0 1.5rem 0; /* 增加上边距，为语言选择器腾出空间 */
+  position: relative;
+  box-shadow: 0 2px 8px hsla(var(--code-shadow));
+  border: 1px solid hsla(var(--code-border));
+}
+
+.mdxeditor .cm-editor {
+  border-radius: var(--radius);
+  overflow: hidden;
+  background-color: hsl(var(--code-bg));
+  color: hsl(var(--code-fg));
+  width: 100%;
+}
+
+.mdxeditor .cm-editor .cm-scroller {
+  padding: 0.75rem 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  font-family: Consolas, monospace;
+}
+
+.mdxeditor .cm-editor .cm-content {
+  padding: 0 1rem;
+  font-family: Consolas, monospace;
+}
+
+.mdxeditor .cm-editor .cm-gutters {
+  background-color: hsla(var(--code-bg) / 0.8);
+  border-right: 1px solid hsla(var(--code-border));
+  color: hsl(var(--code-line-number));
+  padding: 0 0.5rem 0 0.25rem;
+  font-size: 0.85rem;
+}
+
+/* 语言选择器样式 */
+.mdxeditor .code-block-language-select {
+  background-color: hsl(var(--code-header-bg));
+  border: none;
+  border-radius: 3px;
+  color: hsl(var(--code-header-fg));
+  font-size: 0.85rem;
+  position: absolute;
+  top: -2.25rem;
+  left: 0;
+  z-index: 10;
+  padding: 0.35rem 0.75rem;
+  font-family: 'SF Pro Text', system-ui, -apple-system, sans-serif;
+  box-shadow: 0 1px 3px hsla(var(--code-shadow));
+  width: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mdxeditor .code-block-language-select:hover {
+  filter: brightness(110%);
+}
+
+.mdxeditor .code-block-language-select::before {
+  content: "语言：";
+  margin-right: 0.5rem;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* 为代码块添加语言标记 */
+.mdxeditor .code-block::before {
+  content: attr(data-language);
+  position: absolute;
+  top: -2.25rem;
+  right: 0;
+  font-family: 'SF Pro Text', -apple-system, system-ui, sans-serif;
+  font-size: 0.75rem;
+  background-color: hsl(var(--code-header-bg));
+  color: hsl(var(--code-header-fg));
+  padding: 0.35rem 0.75rem;
+  border-radius: 3px;
+  z-index: 5;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 1px 2px hsla(var(--code-shadow));
+}
+
+/* 处理没有语言属性的代码块 */
+.mdxeditor .code-block[data-language=""]::before,
+.mdxeditor .code-block:not([data-language])::before {
+  content: "文本";
+}
+
+/* 处理text语言的代码块 */
+.mdxeditor .code-block[data-language="text"]::before {
+  content: "文本";
+  background-color: #666666;
+  color: white;
+}
+
+/* 修改代码高亮颜色 */
+.mdxeditor .cm-editor .cm-keyword {
+  color: hsl(var(--code-keyword));
+}
+
+.mdxeditor .cm-editor .cm-string {
+  color: hsl(var(--code-string));
+}
+
+.mdxeditor .cm-editor .cm-property {
+  color: hsl(var(--code-property));
+}
+
+.mdxeditor .cm-editor .cm-variable {
+  color: hsl(var(--code-fg));
+}
+
+.mdxeditor .cm-editor .cm-function {
+  color: hsl(var(--code-function));
+}
+
+.mdxeditor .cm-editor .cm-number {
+  color: hsl(var(--code-number));
+}
+
+.mdxeditor .cm-editor .cm-operator {
+  color: hsl(var(--code-operator));
+}
+
+.mdxeditor .cm-editor .cm-punctuation {
+  color: hsl(var(--code-punctuation));
+}
+
+.mdxeditor .cm-line {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  letter-spacing: 0.025em;
+  font-family: Consolas, monospace;
+}
+
+/* 注释文本样式 */
+.mdxeditor .cm-editor .cm-comment {
+  color: hsl(var(--code-comment));
+  font-style: italic;
+}
+
+
+/* 覆盖CodeMirror工具栏样式 */
+.mdxeditor ._codeMirrorToolbar_uazmk_408,
+.mdxeditor [class*="_codeMirrorToolbar_"] {
+  position: relative;
+  display: flex;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
+  z-index: 1;
+  background-color: var(--baseBase);
+  border-bottom-left-radius: var(--radius-base);
+}
+
+/* 确保CodeMirror工具栏按钮样式匹配 */
+.mdxeditor ._codeMirrorToolbar_uazmk_408 button,
+.mdxeditor [class*="_codeMirrorToolbar_"] button {
+  opacity: 0.9;
+}

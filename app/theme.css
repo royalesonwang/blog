@@ -1,0 +1,759 @@
+:root  {
+  --background: 215 100% 95%;
+  --foreground: 215 5% 10%;
+  --card: 215 50% 90%;
+  --card-foreground: 215 5% 15%;
+  --popover: 215 100% 95%;
+  --popover-foreground: 215 100% 10%;
+  --primary: 215 88% 58%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 30% 70%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 177 30% 85%;
+  --muted-foreground: 215 5% 40%;
+  --accent: 177 30% 80%;
+  --accent-foreground: 215 5% 15%;
+  --destructive: 0 100% 40%;
+  --destructive-foreground: 215 5% 90%;
+  --border: 215 30% 50%;
+  --input: 215 30% 40%;
+  --ring: 215 88% 58%;
+  --radius: 0.5rem;
+  
+  /* Markdown 样式变量 - 浅色主题 */
+  --markdown-text-color: hsl(var(--foreground));
+  --markdown-link-color: hsl(var(--primary));
+  --markdown-table-border-color: hsl(var(--border) / 0.5);
+  --markdown-table-bg-color: hsl(var(--background));
+  --markdown-table-header-bg-color: hsl(var(--muted));
+  --markdown-table-row-even-bg-color: hsl(var(--muted) / 0.3);
+  --markdown-table-row-odd-bg-color: hsl(var(--background));
+  --markdown-table-row-hover-bg-color: hsl(var(--accent) / 0.2);
+  --markdown-pre-bg-color: hsl(var(--muted));
+  --markdown-pre-border-color: hsl(var(--border) / 0.5);
+  --markdown-pre-code-color: hsl(var(--foreground));
+  --markdown-code-bg-color: hsl(var(--muted) / 0.5);
+  --markdown-code-color: hsl(var(--foreground));
+  --markdown-hljs-bg-color: transparent;
+  --markdown-hljs-color: hsl(var(--foreground));
+  --markdown-language-label-bg-color: hsl(var(--muted));
+  --markdown-language-label-color: hsl(var(--muted-foreground));
+  --markdown-li-hover-bg-color: hsl(var(--accent) / 0.1);
+  --markdown-blockquote-border-color: hsl(var(--primary) / 0.5);
+  --markdown-blockquote-bg-color: hsl(var(--muted) / 0.3);
+  
+  /* 代码块颜色 - 浅色模式 */
+  --code-bg: 0 0% 97%;
+  --code-fg: 215 5% 15%;
+  --code-header-bg: 215 90% 50%;
+  --code-header-fg: 0 0% 100%;
+  --code-line-number: 215 10% 70%;
+  --code-comment: 120 2% 40%;
+  --code-keyword: 240 60% 50%; 
+  --code-function: 215 80% 40%;
+  --code-string: 40 70% 40%;
+  --code-number: 35 90% 45%;
+  --code-operator: 355 65% 50%;
+  --code-punctuation: 215 10% 50%;
+  --code-property: 200 70% 45%;
+  --code-border: 215 30% 85%;
+  --code-shadow: 0 10% 70% / 0.1;
+  --code-boolean: 260 80% 60%;
+  --code-class-name: 180 70% 45%;
+  --code-selector: 290 70% 50%;
+  --code-tag: 340 80% 45%;
+  --code-builtin: 35 90% 55%;
+  --code-doctype: 215 50% 50%;
+  --code-entity: 215 65% 60%;
+  --code-namespace: 200 60% 45%;
+  --code-regex: 30 90% 45%;
+  --code-important: 0 90% 60%;
+  --code-constant: 260 60% 55%;
+  --code-annotation: 30 80% 50%;
+  --code-attribute: 45 80% 45%;
+  --code-variable: 210 70% 55%;
+  --code-url: 210 100% 60%;
+  --code-prolog: 215 30% 60%;
+}
+.dark  {
+  --background: 215 50% 10%;
+  --foreground: 215 5% 90%;
+  --card: 215 50% 10%;
+  --card-foreground: 215 5% 90%;
+  --popover: 215 50% 5%;
+  --popover-foreground: 215 5% 90%;
+  --primary: 215 88% 58%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 30% 20%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 177 30% 25%;
+  --muted-foreground: 215 5% 60%;
+  --accent: 177 30% 25%;
+  --accent-foreground: 215 5% 90%;
+  --destructive: 0 100% 40%;
+  --destructive-foreground: 215 5% 90%;
+  --border: 215 30% 40%;
+  --input: 215 30% 40%;
+  --ring: 215 88% 58%;
+  --radius: 0.5rem;
+  
+  /* Markdown 样式变量 - 深色主题 */
+  --markdown-text-color: hsl(var(--foreground));
+  --markdown-link-color: hsl(var(--primary));
+  --markdown-table-border-color: hsl(var(--border) / 0.5);
+  --markdown-table-bg-color: hsl(var(--card));
+  --markdown-table-header-bg-color: hsl(var(--popover));
+  --markdown-table-row-even-bg-color: hsl(var(--muted) / 0.2);
+  --markdown-table-row-odd-bg-color: hsl(var(--card));
+  --markdown-table-row-hover-bg-color: hsl(var(--accent) / 0.2);
+  --markdown-pre-bg-color: hsl(var(--popover));
+  --markdown-pre-border-color: hsl(var(--border) / 0.5);
+  --markdown-pre-code-color: hsl(var(--foreground));
+  --markdown-code-bg-color: hsl(var(--muted) / 0.3);
+  --markdown-code-color: hsl(var(--foreground));
+  --markdown-hljs-bg-color: transparent;
+  --markdown-hljs-color: hsl(var(--foreground));
+  --markdown-language-label-bg-color: hsl(var(--popover));
+  --markdown-language-label-color: hsl(var(--muted-foreground));
+  --markdown-li-hover-bg-color: hsl(var(--accent) / 0.1);
+  --markdown-blockquote-border-color: hsl(var(--primary) / 0.5);
+  --markdown-blockquote-bg-color: hsl(var(--muted) / 0.2);
+  
+  /* 代码块颜色 - 深色模式 */
+  --code-bg: 220 13% 18%;
+  --code-fg: 220 14% 96%;
+  --code-header-bg: 220 13% 25%;
+  --code-header-fg: 220 14% 80%;
+  --code-line-number: 220 10% 50%;
+  --code-comment: 120 5% 55%;
+  --code-keyword: 330 70% 70%;
+  --code-function: 180 70% 70%;
+  --code-string: 40 90% 70%;
+  --code-number: 35 100% 70%;
+  --code-operator: 355 70% 75%;
+  --code-punctuation: 220 14% 80%;
+  --code-property: 200 100% 80%;
+  --code-border: 0 0% 0% / 0.1;
+  --code-shadow: 0 0% 0% / 0.3;
+  --code-boolean: 260 90% 80%;
+  --code-class-name: 180 100% 70%;
+  --code-selector: 290 90% 80%;
+  --code-tag: 340 90% 70%;
+  --code-builtin: 35 100% 75%;
+  --code-doctype: 220 50% 70%;
+  --code-entity: 220 70% 80%;
+  --code-namespace: 200 80% 75%;
+  --code-regex: 30 100% 70%;
+  --code-important: 0 100% 75%;
+  --code-constant: 260 80% 75%;
+  --code-annotation: 30 90% 70%;
+  --code-attribute: 45 90% 70%;
+  --code-variable: 210 90% 75%;
+  --code-url: 210 100% 80%;
+  --code-prolog: 220 50% 70%;
+}
+
+/* Markdown 基础样式 */
+.markdown {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  line-height: 1.6;
+  color: var(--markdown-text-color);
+}
+
+/* 引用块样式 */
+.markdown blockquote,
+.markdown .markdown-blockquote {
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  border-left: 4px solid var(--markdown-blockquote-border-color);
+  background-color: var(--markdown-blockquote-bg-color);
+  border-radius: 0.25rem;
+  font-style: italic;
+}
+
+.markdown blockquote p:last-child,
+.markdown .markdown-blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown blockquote cite,
+.markdown .markdown-blockquote cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.875em;
+  text-align: right;
+}
+
+/* 斜体和粗体文本样式 */
+.markdown em,
+.markdown .markdown-italic {
+  font-style: italic;
+  color: var(--markdown-text-color);
+  font-weight: normal;
+}
+
+.markdown strong,
+.markdown .markdown-bold {
+  font-weight: 600;
+  color: var(--markdown-text-color);
+}
+
+/* 斜体加粗文本组合样式 */
+.markdown strong em,
+.markdown em strong,
+.markdown .markdown-bold .markdown-italic,
+.markdown .markdown-italic .markdown-bold {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--markdown-text-color);
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown h1 {
+  font-size: 2em;
+}
+.markdown h2 {
+  font-size: 1.5em;
+}
+.markdown h3 {
+  font-size: 1.25em;
+}
+
+.markdown p {
+  margin-bottom: 16px;
+}
+
+.markdown a {
+  color: var(--markdown-link-color);
+  text-decoration: none;
+}
+
+.markdown a:hover {
+  text-decoration: underline;
+}
+
+/* 优化无序列表和有序列表 */
+.markdown ul,
+.markdown .markdown-unordered-list {
+  padding-left: 2em;
+  margin: 1em 0;
+  list-style-type: disc;
+}
+
+.markdown ol,
+.markdown .markdown-ordered-list {
+  padding-left: 2em;
+  margin: 1em 0;
+  list-style-type: decimal;
+}
+
+.markdown ul ul {
+  list-style-type: circle;
+  margin: 0.5em 0;
+}
+
+.markdown ul ul ul {
+  list-style-type: square;
+}
+
+.markdown ol ol {
+  list-style-type: lower-alpha;
+  margin: 0.5em 0;
+}
+
+.markdown ol ol ol {
+  list-style-type: lower-roman;
+}
+
+.markdown li {
+  margin: 0.5em 0;
+  line-height: 1.5;
+}
+
+.markdown li::marker {
+  color: currentColor;
+}
+
+.markdown li:hover {
+  background-color: var(--markdown-li-hover-bg-color);
+}
+
+.markdown-list-item {
+  display: list-item !important;
+}
+
+.markdown img {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.markdown ul li, 
+.markdown ol li {
+  padding-left: 0.5em;
+}
+
+.markdown li > ul,
+.markdown li > ol {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+/* 确保列表项有明显的差异 */
+.markdown-ordered-list > .markdown-list-item {
+  list-style-type: decimal !important;
+  margin-left: 0.5em;
+}
+
+.markdown-unordered-list > .markdown-list-item {
+  list-style-type: disc !important;
+  margin-left: 0.5em;
+}
+
+/* 嵌套列表样式增强 */
+.markdown-unordered-list .markdown-unordered-list > .markdown-list-item {
+  list-style-type: circle !important;
+}
+
+.markdown-unordered-list .markdown-unordered-list .markdown-unordered-list > .markdown-list-item {
+  list-style-type: square !important;
+}
+
+.markdown-ordered-list .markdown-ordered-list > .markdown-list-item {
+  list-style-type: lower-alpha !important;
+}
+
+.markdown-ordered-list .markdown-ordered-list .markdown-ordered-list > .markdown-list-item {
+  list-style-type: lower-roman !important;
+}
+
+/* 表格样式 */
+.markdown .table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1em 0;
+  border-radius: var(--radius);
+  border: 1px solid var(--markdown-table-border-color);
+  background-color: var(--markdown-table-bg-color);
+}
+
+.markdown table,
+.markdown .markdown-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0;
+  font-size: 0.9em;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border-spacing: 0;
+}
+
+.markdown thead,
+.markdown .markdown-thead {
+  border-bottom: 2px solid var(--markdown-table-border-color);
+}
+
+.markdown tbody,
+.markdown .markdown-tbody {
+  border-top: none;
+}
+
+.markdown table th,
+.markdown table td,
+.markdown .markdown-th,
+.markdown .markdown-td {
+  border: 1px solid var(--markdown-table-border-color);
+  padding: 8px 12px;
+  text-align: left;
+  min-width: 100px;
+}
+
+/* 调整边框样式，避免双边框 */
+.markdown table tr:not(:last-child) td,
+.markdown .markdown-table-row:not(:last-child) .markdown-td {
+  border-bottom-width: 1px;
+}
+
+.markdown table tr td:not(:last-child),
+.markdown .markdown-table-row .markdown-td:not(:last-child) {
+  border-right-width: 1px;
+}
+
+.markdown table tr:first-child th,
+.markdown .markdown-table-row:first-child .markdown-th {
+  border-top: none;
+}
+
+.markdown table tr:last-child td,
+.markdown .markdown-table-row:last-child .markdown-td {
+  border-bottom: none;
+}
+
+.markdown table tr td:first-child,
+.markdown table tr th:first-child,
+.markdown .markdown-table-row .markdown-td:first-child,
+.markdown .markdown-table-row .markdown-th:first-child {
+  border-left: none;
+}
+
+.markdown table tr td:last-child,
+.markdown table tr th:last-child,
+.markdown .markdown-table-row .markdown-td:last-child,
+.markdown .markdown-table-row .markdown-th:last-child {
+  border-right: none;
+}
+
+.markdown table th,
+.markdown .markdown-th {
+  background-color: var(--markdown-table-header-bg-color);
+  color: var(--markdown-text-color);
+  font-weight: 600;
+  border-bottom: 2px solid var(--markdown-table-border-color);
+  padding-top: 12px;
+  padding-bottom: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.markdown table tr:nth-of-type(even) {
+  background-color: var(--markdown-table-row-even-bg-color);
+}
+
+.markdown table tr:nth-of-type(odd) {
+  background-color: var(--markdown-table-row-odd-bg-color);
+}
+
+.markdown table tr:hover {
+  background-color: var(--markdown-table-row-hover-bg-color);
+}
+
+.markdown .markdown-table-row td {
+  vertical-align: top;
+}
+
+/* 代码块和内联代码样式优化 */
+.markdown pre {
+  margin: 2em 0;
+  padding: 0;
+  overflow: hidden;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  border-radius: var(--radius);
+  position: relative;
+  box-shadow: 0 2px 8px hsla(var(--code-shadow));
+}
+
+/* 语言标记 - 顶部栏 */
+.markdown pre:before {
+  content: attr(class);
+  display: block;
+  background-color: hsl(var(--code-header-bg));
+  color: hsl(var(--code-header-fg));
+  font-size: 0.75rem;
+  padding: 0.5em 1em;
+  font-family: system-ui, -apple-system, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+
+.markdown pre code {
+  display: block;
+  color: hsl(var(--code-fg));
+  padding: 1.25rem 1rem;
+  background-color: hsl(var(--code-bg));
+  overflow-x: auto;
+  white-space: pre;
+  word-break: normal;
+  word-wrap: normal;
+  font-family: Consolas, monospace;
+  letter-spacing: 0.025em;
+  border: 1px solid hsla(var(--code-border));
+  border-top: none;
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+
+.markdown code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 0.9em;
+  background-color: var(--markdown-code-bg-color);
+  color: var(--markdown-code-color);
+  border-radius: 3px;
+  font-family: Consolas, monospace;
+}
+
+/* Python语言标记和样式 */
+.markdown pre.language-python:before {
+  content: "Python";
+  background-color: #3572A5;
+  color: white;
+}
+
+.markdown pre.language-python code {
+  background-color: hsl(var(--code-bg));
+}
+
+/* JavaScript语言标记和样式 */
+.markdown pre.language-javascript:before,
+.markdown pre.language-js:before {
+  content: "JavaScript";
+  background-color: #F7DF1E;
+  color: #000;
+}
+
+.markdown pre.language-javascript code,
+.markdown pre.language-js code {
+  background-color: hsl(var(--code-bg));
+}
+
+/* TypeScript语言标记和样式 */
+.markdown pre.language-typescript:before,
+.markdown pre.language-ts:before {
+  content: "TypeScript";
+  background-color: #007ACC;
+  color: white;
+}
+
+.markdown pre.language-typescript code,
+.markdown pre.language-ts code {
+  background-color: hsl(var(--code-bg));
+}
+
+/* CSS语言标记和样式 */
+.markdown pre.language-css:before {
+  content: "CSS";
+  background-color: #563D7C;
+  color: white;
+}
+
+.markdown pre.language-css code {
+  background-color: hsl(var(--code-bg));
+}
+
+/* HTML语言标记和样式 */
+.markdown pre.language-html:before {
+  content: "HTML";
+  background-color: #E34C26;
+  color: white;
+}
+
+.markdown pre.language-html code {
+  background-color: hsl(var(--code-bg));
+}
+
+/* Bash语言标记和样式 */
+.markdown pre.language-bash:before {
+  content: "Bash";
+  background-color: #3E3E3E;
+  color: white;
+}
+
+.markdown pre.language-bash code {
+  background-color: hsl(var(--code-bg));
+}
+
+/* 其他语言保留原来的样式定义，但使用变量定义背景色 */
+.markdown pre.language-json:before { content: "JSON"; }
+.markdown pre.language-json code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-ruby:before { content: "Ruby"; background-color: #CC342D; color: white; }
+.markdown pre.language-ruby code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-java:before { content: "Java"; background-color: #B07219; color: white; }
+.markdown pre.language-java code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-c:before { content: "C"; background-color: #555555; color: white; }
+.markdown pre.language-c code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-cpp:before { content: "C++"; background-color: #f34b7d; color: white; }
+.markdown pre.language-cpp code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-csharp:before { content: "C#"; background-color: #178600; color: white; }
+.markdown pre.language-csharp code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-go:before { content: "Go"; background-color: #00ADD8; color: white; }
+.markdown pre.language-go code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-rust:before { content: "Rust"; background-color: #DEA584; color: black; }
+.markdown pre.language-rust code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-swift:before { content: "Swift"; background-color: #F05138; color: white; }
+.markdown pre.language-swift code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-kotlin:before { content: "Kotlin"; background-color: #A97BFF; color: white; }
+.markdown pre.language-kotlin code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-php:before { content: "PHP"; background-color: #4F5D95; color: white; }
+.markdown pre.language-php code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-sql:before { content: "SQL"; background-color: #e38c00; color: white; }
+.markdown pre.language-sql code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-markdown:before { content: "Markdown"; background-color: #083fa1; color: white; }
+.markdown pre.language-markdown code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-yaml:before { content: "YAML"; background-color: #cb171e; color: white; }
+.markdown pre.language-yaml code { background-color: hsl(var(--code-bg)); }
+
+.markdown pre.language-text:before { content: "Text"; background-color: #666666; color: white; }
+.markdown pre.language-text code { background-color: hsl(var(--code-bg)); }
+
+/* 高亮代码样式 */
+.markdown .hljs {
+  background-color: transparent;
+  color: hsl(var(--code-fg));
+  padding: 0;
+}
+
+/* 行号样式 */
+.markdown pre {
+  counter-reset: line;
+}
+
+.markdown pre code > div {
+  position: relative;
+  padding-left: 3.5em;
+  min-height: 1.6em;
+}
+
+.markdown pre code > div::before {
+  content: counter(line);
+  counter-increment: line;
+  position: absolute;
+  left: 0;
+  color: hsl(var(--code-line-number));
+  width: 2.5em;
+  text-align: right;
+  padding-right: 1em;
+  font-size: 0.85em;
+  opacity: 0.6;
+  user-select: none;
+}
+
+/* 代码高亮颜色 */
+.markdown pre code .token.keyword { color: hsl(var(--code-keyword)); }
+.markdown pre code .token.comment { color: hsl(var(--code-comment)); }
+.markdown pre code .token.string { color: hsl(var(--code-string)); }
+.markdown pre code .token.number { color: hsl(var(--code-number)); }
+.markdown pre code .token.operator { color: hsl(var(--code-operator)); }
+.markdown pre code .token.punctuation { color: hsl(var(--code-punctuation)); }
+.markdown pre code .token.boolean { color: hsl(var(--code-boolean)); }
+.markdown pre code .token.function { color: hsl(var(--code-function)); }
+.markdown pre code .token.property { color: hsl(var(--code-property)); }
+.markdown pre code .token.class-name { color: hsl(var(--code-class-name)); }
+.markdown pre code .token.selector { color: hsl(var(--code-selector)); }
+.markdown pre code .token.tag { color: hsl(var(--code-tag)); }
+.markdown pre code .token.builtin { color: hsl(var(--code-builtin)); }
+.markdown pre code .token.doctype { color: hsl(var(--code-doctype)); }
+.markdown pre code .token.entity { color: hsl(var(--code-entity)); }
+.markdown pre code .token.namespace { color: hsl(var(--code-namespace)); }
+.markdown pre code .token.regex { color: hsl(var(--code-regex)); }
+.markdown pre code .token.important { color: hsl(var(--code-important)); font-weight: bold; }
+.markdown pre code .token.constant { color: hsl(var(--code-constant)); }
+.markdown pre code .token.annotation { color: hsl(var(--code-annotation)); }
+.markdown pre code .token.attribute { color: hsl(var(--code-attribute)); }
+.markdown pre code .token.variable { color: hsl(var(--code-variable)); }
+.markdown pre code .token.url { color: hsl(var(--code-url)); }
+.markdown pre code .token.prolog { color: hsl(var(--code-prolog)); }
+
+/* 分割线样式 */
+.markdown hr,
+.markdown .markdown-hr {
+  height: 2px;
+  padding: 0;
+  margin: 24px 0;
+  background-color: var(--markdown-table-border-color);
+  border: 0;
+  opacity: 0.5;
+}
+
+/* 目录导航容器样式 */
+.blog-toc-container {
+  position: relative;
+}
+
+/* 目录导航样式 */
+.toc-sidebar {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  /* 移除默认边框 */
+  border-left: none;
+}
+
+.toc-sidebar ul {
+  list-style-type: none;
+}
+
+.toc-sidebar a {
+  display: block;
+  text-decoration: none;
+  transition: color 0.2s;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.toc-sidebar a:hover {
+  color: hsl(var(--primary));
+}
+
+/* 平滑滚动锚点 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 移动设备优化 */
+@media (max-width: 768px) {
+  .toc-sidebar {
+    border-left: none;
+    border-top: none;
+    padding-top: 1rem;
+    margin-top: 1rem;
+  }
+}
+
+/* 目录容器样式 */
+.toc-wrapper {
+  position: relative;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-top: 0.5rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box; /* 确保padding不会增加元素宽度 */
+}
+
+/* 目录固定状态 */
+.toc-fixed {
+  position: fixed;
+  top: 100px;
+  /* 宽度由JavaScript动态设置，确保与父容器一致 */
+  z-index: 10;
+  left: auto; /* 防止位置偏移 */
+}
+
+/* 确保目录固定时，内容区域保持原来的间距 */
+.toc-fixed + .toc-placeholder {
+  height: calc(100vh - 100px);
+  visibility: hidden;
+}
