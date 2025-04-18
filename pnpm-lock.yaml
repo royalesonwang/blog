@@ -37,7 +37,7 @@ importers:
         version: 1.0.2
       '@hookform/resolvers':
         specifier: ^3.10.0
-        version: 3.10.0(react-hook-form@7.54.2(react@19.1.0))
+        version: 3.10.0(react-hook-form@7.55.0(react@19.1.0))
       '@mdx-js/loader':
         specifier: ^3.1.0
         version: 3.1.0(acorn@8.14.0)
@@ -195,8 +195,8 @@ importers:
         specifier: ^19.0.0
         version: 19.1.0(react@19.1.0)
       react-hook-form:
-        specifier: ^7.54.2
-        version: 7.54.2(react@19.1.0)
+        specifier: ^7.55.0
+        version: 7.55.0(react@19.1.0)
       react-icon-cloud:
         specifier: ^4.1.4
         version: 4.1.4(react@19.1.0)
@@ -5391,8 +5391,8 @@ packages:
     peerDependencies:
       react: '>=16.13.1'
 
-  react-hook-form@7.54.2:
-    resolution: {integrity: sha512-eHpAUgUjWbZocoQYUHposymRb4ZP6d0uwUnooL2uOybA9/3tPUvoAKqEWK1WaSiTxxOfTpffNZP7QwlnM3/gEg==}
+  react-hook-form@7.55.0:
+    resolution: {integrity: sha512-XRnjsH3GVMQz1moZTW53MxfoWN7aDpUg/GpVNc4A3eXRVNdGXfbzJ4vM4aLQ8g6XCUh1nIbx70aaNCl7kxnjog==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
@@ -7498,9 +7498,9 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@hookform/resolvers@3.10.0(react-hook-form@7.54.2(react@19.1.0))':
+  '@hookform/resolvers@3.10.0(react-hook-form@7.55.0(react@19.1.0))':
     dependencies:
-      react-hook-form: 7.54.2(react@19.1.0)
+      react-hook-form: 7.55.0(react@19.1.0)
 
   '@humanfs/core@0.19.1': {}
 
@@ -7976,7 +7976,7 @@ snapshots:
       micromark-util-symbol: 2.0.1
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
-      react-hook-form: 7.54.2(react@19.1.0)
+      react-hook-form: 7.55.0(react@19.1.0)
       unidiff: 1.0.4
     transitivePeerDependencies:
       - '@codemirror/language'
@@ -12758,7 +12758,7 @@ snapshots:
       '@babel/runtime': 7.26.9
       react: 19.1.0
 
-  react-hook-form@7.54.2(react@19.1.0):
+  react-hook-form@7.55.0(react@19.1.0):
     dependencies:
       react: 19.1.0
 
