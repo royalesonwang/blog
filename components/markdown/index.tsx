@@ -194,11 +194,38 @@ export default function Markdown({ content }: { content: string }) {
         content = content.replace(/__(.*?)__/g, "$1");     // 去除 __粗体__
         content = content.replace(/_(.*?)_/g, "$1");       // 去除 _斜体_
         
+        // 静态ID映射（在渲染器中不能持久化状态，所以使用一个内部的静态映射）
+        if (!(md as any).__idMap) {
+          (md as any).__idMap = {};
+        }
+        const idMap = (md as any).__idMap;
+        
         // 为标题创建ID (用于锚点链接)
-        const id = content
-          .toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^\w\-]+/g, '');
+        // 检查是否包含中文或其他非拉丁字符
+        const hasNonLatinChars = /[^\u0000-\u007F]/.test(content);
+        
+        let baseId;
+        if (hasNonLatinChars) {
+          // 对于中文，生成基础ID，只替换空格
+          baseId = content
+            .toLowerCase()
+            .replace(/\s+/g, "-");
+        } else {
+          // 对于拉丁字符，按原来的方式处理
+          baseId = content
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^\w\-]+/g, "");
+        }
+        
+        // 确保ID唯一
+        let id = baseId;
+        if (idMap[baseId]) {
+          idMap[baseId]++;
+          id = `${baseId}-${idMap[baseId]}`;
+        } else {
+          idMap[baseId] = 1;
+        }
           
         return `<${token.tag} id="${id}" class="scroll-mt-16">`;
       };

@@ -18,6 +18,41 @@ function extractHeadings(content: string): TOCItem[] {
   const headings: TOCItem[] = [];
   const rootItems: TOCItem[] = [];
   let match;
+  
+  // 标题ID的映射，用于检测重复
+  const idMap: Record<string, number> = {};
+
+  // 生成唯一ID的函数
+  const generateUniqueId = (text: string): string => {
+    // 检查是否包含中文或其他非拉丁字符
+    const hasNonLatinChars = /[^\u0000-\u007F]/.test(text);
+    
+    let baseId;
+    if (hasNonLatinChars) {
+      // 对于中文，生成基础ID
+      baseId = text
+        .toLowerCase()
+        .replace(/\s+/g, "-");
+      
+      // 为非拉丁字符保留原始文本作为锚点
+      // 但仍替换空格为连字符
+    } else {
+      // 对于拉丁字符，按原来的方式处理
+      baseId = text
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w\-]+/g, "");
+    }
+    
+    // 检查ID是否已存在，如果存在则添加计数器
+    if (idMap[baseId]) {
+      idMap[baseId]++;
+      return `${baseId}-${idMap[baseId]}`;
+    } else {
+      idMap[baseId] = 1;
+      return baseId;
+    }
+  };
 
   // 正则匹配所有标题
   while ((match = headingRegex.exec(content)) !== null) {
@@ -31,10 +66,7 @@ function extractHeadings(content: string): TOCItem[] {
     text = text.replace(/_(.*?)_/g, "$1");       // 去除 _斜体_
     
     // 为标题创建 ID (用于锚点链接)
-    const id = text
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w\-]+/g, "");
+    const id = generateUniqueId(text);
 
     const item: TOCItem = {
       id,
