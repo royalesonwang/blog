@@ -116,20 +116,22 @@ function ProfileForm({ className }: React.ComponentProps<"form">) {
         </Button>
       )}
       
-      <Button
-        variant="secondary"
-        className="w-full flex items-center gap-2"
-        onClick={() => {
-          signIn("credentials", { 
-            username: "test_admin", 
-            password: "test_password",
-            callbackUrl: "/",
-            redirect: true,
-          });
-        }}
-      >
-        {t("sign_modal.test_admin_sign_in")}
-      </Button>
+      {process.env.NODE_ENV === "development" && (
+        <Button
+          variant="secondary"
+          className="w-full flex items-center gap-2"
+          onClick={() => {
+            signIn("credentials", { 
+              username: "test_admin", 
+              password: "test_password",
+              callbackUrl: "/",
+              redirect: true,
+            });
+          }}
+        >
+          {t("sign_modal.test_admin_sign_in")}
+        </Button>
+      )}
     </div>
   );
 }

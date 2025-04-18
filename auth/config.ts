@@ -103,32 +103,34 @@ if (
   );
 }
 
-// Test Admin Auth (Development and Production)
-providers.push(
-  CredentialsProvider({
-    id: "credentials",
-    name: "Test Admin",
-    credentials: {
-      username: { label: "Username", type: "text" },
-      password: { label: "Password", type: "password" }
-    },
-    async authorize(credentials, req) {
-      // Check credentials
-      if (credentials?.username === "test_admin" && credentials?.password === "test_password") {
-        // Return test admin user with known info that matches the database
-        return {
-          id: "test_admin_id",
-          name: "Test Admin",
-          email: "test_admin@example.com",
-          image: "/logo.png",
+// Test Admin Auth (Development Only)
+if (process.env.NODE_ENV === "development") {
+  providers.push(
+    CredentialsProvider({
+      id: "credentials",
+      name: "Test Admin",
+      credentials: {
+        username: { label: "Username", type: "text" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials, req) {
+        // Check credentials
+        if (credentials?.username === "test_admin" && credentials?.password === "test_password") {
+          // Return test admin user with known info that matches the database
+          return {
+            id: "test_admin_id",
+            name: "Test Admin",
+            email: "test_admin@example.com",
+            image: "/logo.png",
+          }
         }
+        
+        // Return null if credential validation fails
+        return null
       }
-      
-      // Return null if credential validation fails
-      return null
-    }
-  })
-);
+    })
+  );
+}
 
 export const providerMap = providers
   .map((provider) => {
@@ -174,7 +176,7 @@ export const authOptions: NextAuthConfig = {
     async jwt({ token, user, account }) {
       // Persist the OAuth access_token and or the user id to the token right after signin
       try {
-        if (user && user.email === "test_admin@example.com") {
+        if (process.env.NODE_ENV === "development" && user && user.email === "test_admin@example.com") {
           // Special handling for test admin user
           token.user = {
             uuid: "24a81ed2-cb83-4705-92d7-35a2887ee482", // 使用提供的UUID
