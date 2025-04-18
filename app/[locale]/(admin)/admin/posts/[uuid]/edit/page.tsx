@@ -85,6 +85,27 @@ export default async function ({
         value: PostStatus.Created,
       },
       {
+        name: "type",
+        title: "Type",
+        type: "select",
+        options: [
+          { title: "Life", value: "life" },
+          { title: "Academic", value: "academic" },
+          { title: "Technology", value: "technology" }
+        ],
+        value: "technology",
+        validation: {
+          required: true,
+        },
+      },
+      {
+        name: "tag",
+        title: "Tags",
+        type: "text",
+        placeholder: "Enter tags separated by commas (e.g., nextjs,react,tutorial)",
+        tip: "Separate multiple tags with commas",
+      },
+      {
         name: "description",
         title: "Description",
         type: "textarea",

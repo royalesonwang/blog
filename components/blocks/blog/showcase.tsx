@@ -135,16 +135,25 @@ export default function BlogShowcase({ blog }: { blog: BlogType }) {
                       />
                     </div>
                     <div className="p-4 md:p-4 lg:p-4">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
                         {item.created_at && (
                           <Badge variant="outline" className="text-xs">
                             {new Date(item.created_at).toLocaleDateString()}
                           </Badge>
                         )}
-                        <div className="line-clamp-1 break-words text-lg font-medium md:text-xl lg:text-xl">
+                        
+                        {/* 显示文章类型 */}
+                        {item.type && (
+                          <Badge variant="outline" className="text-xs">
+                            {item.type}
+                          </Badge>
+                        )}
+                        
+                        <div className="w-full mt-1 line-clamp-1 break-words text-lg font-medium md:text-xl lg:text-xl">
                           {item.title}
                         </div>
                       </div>
+                      
                       <div className="mb-3 line-clamp-1 text-sm text-muted-foreground md:mb-4 md:text-base">
                         {item.description || getDefaultDescription(locale)}
                       </div>

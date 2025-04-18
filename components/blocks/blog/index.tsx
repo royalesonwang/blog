@@ -59,13 +59,21 @@ export default function Blog({ blog }: { blog: BlogType }) {
                     />
                   </div>
                   <div className="px-4 py-4 md:px-4 md:py-4 lg:px-4 lg:py-4">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
                       {item.created_at && (
                         <Badge variant="outline" className="text-xs">
                           {new Date(item.created_at).toLocaleDateString()}
                         </Badge>
                       )}
-                      <h3 className="line-clamp-1 text-lg font-semibold md:text-xl lg:text-xl">
+                      
+                      {/* 显示文章类型 */}
+                      {item.type && (
+                        <Badge variant="outline" className="text-xs">
+                          {item.type}
+                        </Badge>
+                      )}
+                      
+                      <h3 className="w-full mt-1 line-clamp-1 text-lg font-semibold md:text-xl lg:text-xl">
                         {item.title}
                       </h3>
                     </div>

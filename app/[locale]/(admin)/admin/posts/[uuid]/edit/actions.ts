@@ -23,6 +23,8 @@ export async function updatePostAction(formData: FormData, passby: any) {
   const author_name = formData.get("author_name") as string;
   const author_avatar_url = formData.get("author_avatar_url") as string;
   const content = formData.get("content") as string;
+  const type = formData.get("type") as string;
+  const tag = formData.get("tag") as string;
 
   if (
     !title ||
@@ -51,6 +53,8 @@ export async function updatePostAction(formData: FormData, passby: any) {
     author_name,
     author_avatar_url,
     content,
+    type,
+    tag,
   };
 
   try {

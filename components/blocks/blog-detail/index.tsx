@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useState, useRef } from "react";
+import { Badge } from "@/components/ui/badge";
 
 import Crumb from "./crumb";
 import Markdown from "@/components/markdown";
@@ -15,6 +16,9 @@ export default function BlogDetail({ post }: { post: Post }) {
   // 直接引用目录容器
   const tocRef = useRef<HTMLDivElement>(null);
   const [tocPosition, setTocPosition] = useState({ left: 0, width: 0 });
+  
+  // 处理标签显示
+  const tags = post.tag ? post.tag.split(',').map(tag => tag.trim()).filter(Boolean) : [];
   
   useEffect(() => {
     // 计算目录位置
@@ -73,16 +77,30 @@ export default function BlogDetail({ post }: { post: Post }) {
               />
             </Avatar>
           )}
-          <div>
+          <div className="flex flex-wrap items-center gap-2">
             {post.author_name && (
               <a href="javascript:void(0)" className="font-medium">
                 {post.author_name}
               </a>
             )}
 
-            <span className="ml-2 text-muted-foreground">
+            <span className="text-muted-foreground">
               on {post.created_at && moment(post.created_at).fromNow()}
             </span>
+            
+            {/* 标签显示 */}
+            {tags.length > 0 && (
+              <div className="flex items-center gap-1 ml-2">
+                <span className="text-muted-foreground">•</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {tags.map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="my-2 mb-4 border-t border-border"></div>
