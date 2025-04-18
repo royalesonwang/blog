@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -20,6 +21,30 @@ import { useTranslations } from "next-intl";
 
 export default function SignUser({ user }: { user: User }) {
   const t = useTranslations();
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  
+  useEffect(() => {
+    // Check if user is admin via API
+    const checkAdminStatus = async () => {
+      try {
+        const resp = await fetch("/api/check-admin", {
+          method: "POST",
+        });
+        
+        if (!resp.ok) {
+          console.error("Failed to check admin status");
+          return;
+        }
+        
+        const { data } = await resp.json();
+        setIsAdmin(data?.is_admin || false);
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+      }
+    };
+    
+    checkAdminStatus();
+  }, [user.email]);
 
   return (
     <DropdownMenu>
@@ -40,7 +65,7 @@ export default function SignUser({ user }: { user: User }) {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
 
-        {user.is_admin && (
+        {isAdmin && (
           <>
             <DropdownMenuItem className="flex justify-center cursor-pointer">
               <Link href="/admin/users" target="_blank">
