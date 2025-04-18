@@ -6,7 +6,7 @@ import PostFormSlot from "@/components/dashboard/slots/post-form";
 import { Form as FormSlotType } from "@/types/slots/form";
 import { getUserInfo } from "@/services/user";
 import { addPost } from "./actions";
-export const runtime = "edge";
+ 
 
 export default async function () {
   const user = await getUserInfo();

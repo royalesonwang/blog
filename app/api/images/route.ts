@@ -3,7 +3,7 @@ import { getSupabaseClient } from "@/models/db";
 import { auth } from "@/auth";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
-export const runtime = "edge";
+ 
 
 // 初始化S3客户端连接到Cloudflare R2
 const S3 = new S3Client({

@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { handleOrderSession } from "@/services/order";
 import { respOk } from "@/lib/resp";
-export const runtime = "edge";
+ 
 
 export async function POST(req: Request) {
   try {

@@ -2,7 +2,7 @@ import { PostStatus, findPostBySlug } from "@/models/post";
 
 import BlogDetail from "@/components/blocks/blog-detail";
 import Empty from "@/components/blocks/empty";
-export const runtime = "edge";
+ 
 
 export async function generateMetadata({
   params,

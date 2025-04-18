@@ -17,7 +17,7 @@ import { getPostsByLocale } from "@/models/post";
 import { Blog as BlogType } from "@/types/blocks/blog";
 import { getTranslations } from "next-intl/server";
 
-export const runtime = "edge";
+ 
 
 export async function generateMetadata({
   params,

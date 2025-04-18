@@ -2,7 +2,7 @@ import Feature1 from "@/components/blocks/feature1";
 import { Section as SectionType } from "@/types/blocks/section";
 import { getTranslations } from "next-intl/server";
 import Icon from "@/components/icon";
-export const runtime = "edge";
+ 
 
 export async function generateMetadata({
   params,

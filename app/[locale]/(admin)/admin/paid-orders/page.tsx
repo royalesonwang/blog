@@ -3,7 +3,7 @@ import TableSlot from "@/components/dashboard/slots/table";
 import { Table as TableSlotType } from "@/types/slots/table";
 import { getPaiedOrders } from "@/models/order";
 import moment from "moment";
-export const runtime = "edge";
+ 
 
 export default async function () {
   const orders = await getPaiedOrders(1, 50);

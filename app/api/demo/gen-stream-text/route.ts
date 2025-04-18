@@ -10,7 +10,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { deepseek } from "@ai-sdk/deepseek";
 import { openai } from "@ai-sdk/openai";
 import { respErr } from "@/lib/resp";
-export const runtime = "edge";
+ 
 
 export async function POST(req: Request) {
   try {

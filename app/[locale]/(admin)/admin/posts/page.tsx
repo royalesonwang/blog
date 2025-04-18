@@ -5,7 +5,7 @@ import TableSlot from "@/components/dashboard/slots/table";
 import { Table as TableSlotType } from "@/types/slots/table";
 import { getAllPosts } from "@/models/post";
 import moment from "moment";
-export const runtime = "edge";
+ 
 
 export default async function () {
   const posts = await getAllPosts();

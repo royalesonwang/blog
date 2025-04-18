@@ -7,7 +7,7 @@ import { respData, respErr } from "@/lib/resp";
 
 import { getUserUuid } from "@/services/user";
 
-export const runtime = "edge";
+ 
 
 export async function POST(req: Request) {
   try {

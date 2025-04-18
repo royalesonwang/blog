@@ -9,7 +9,7 @@ import PostFormSlot from "@/components/dashboard/slots/post-form";
 import { Form as FormSlotType } from "@/types/slots/form";
 import { getUserInfo } from "@/services/user";
 import { updatePostAction } from "./actions";
-export const runtime = "edge";
+ 
 
 export default async function ({
   params,

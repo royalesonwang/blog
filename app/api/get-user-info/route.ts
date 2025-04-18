@@ -2,7 +2,7 @@ import { respData, respErr, respJson } from "@/lib/resp";
 
 import { findUserByUuid } from "@/models/user";
 import { getUserUuid } from "@/services/user";
-export const runtime = "edge";
+ 
 
 export async function POST(req: Request) {
   try {

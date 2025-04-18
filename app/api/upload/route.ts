@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSupabaseClient } from "@/models/db";
 import { auth } from "@/auth";
-export const runtime = "edge";
+ 
 
 // Initialize S3 client for Cloudflare R2
 const S3 = new S3Client({
