@@ -1,8 +1,8 @@
 "use client";
 
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { useEffect, useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
+import { useEffect, useRef, useState } from "react";
 
 import Crumb from "./crumb";
 import Markdown from "@/components/markdown";
@@ -11,55 +11,179 @@ import { Post } from "@/types/post";
 import moment from "moment";
 
 export default function BlogDetail({ post }: { post: Post }) {
-  // 使用简单的状态控制是否显示固定目录
-  const [showFixedToc, setShowFixedToc] = useState(false);
-  // 直接引用目录容器
-  const tocRef = useRef<HTMLDivElement>(null);
-  const [tocPosition, setTocPosition] = useState({ left: 0, width: 0 });
-  
   // 处理标签显示
   const tags = post.tag ? post.tag.split(',').map(tag => tag.trim()).filter(Boolean) : [];
   
+  // 创建引用
+  const contentRef = useRef<HTMLDivElement>(null);
+  const tocContainerRef = useRef<HTMLDivElement>(null);
+  const tocRef = useRef<HTMLDivElement>(null);
+  
+  // 创建状态
+  const [tocStyles, setTocStyles] = useState({
+    position: 'static' as 'static' | 'fixed' | 'absolute',
+    top: 0,
+    bottom: 'auto',
+    width: 0
+  });
+  
   useEffect(() => {
-    // 计算目录位置
-    const updatePosition = () => {
-      if (tocRef.current) {
-        const rect = tocRef.current.getBoundingClientRect();
-        setTocPosition({
-          left: rect.left,
-          width: rect.width
+    // 初始设置宽度
+    if (tocContainerRef.current) {
+      setTocStyles(prev => ({
+        ...prev,
+        width: tocContainerRef.current?.offsetWidth || 0
+      }));
+    }
+    
+    // 滚动偏移量存储，用于平滑计算
+    let lastScrollY = window.scrollY;
+    let scrollDirection = 'down';
+    
+    // 状态追踪，用于防止频繁切换
+    let lastPositionState = 'fixed';
+    let stateStableCounter = 0;
+    
+    // 监听滚动和窗口大小变化
+    const handlePositioning = () => {
+      if (!tocContainerRef.current || !tocRef.current || !contentRef.current) return;
+      
+      // 确定滚动方向
+      const currentScrollY = window.scrollY;
+      scrollDirection = currentScrollY > lastScrollY ? 'down' : 'up';
+      lastScrollY = currentScrollY;
+      
+      // 获取各元素位置信息
+      const tocHeight = tocRef.current.offsetHeight;
+      const containerRect = tocContainerRef.current.getBoundingClientRect();
+      const containerTop = containerRect.top;
+      const containerHeight = contentRef.current.offsetHeight;
+      
+      // 计算内容区域的底部位置
+      const footer = document.querySelector('footer');
+      const footerTop = footer ? footer.getBoundingClientRect().top : window.innerHeight;
+      
+      // 设置缓冲区，使TOC在接近footer前停止
+      const buffer = 60; // 底部缓冲距离
+      const headerHeight = 96; // 顶部固定高度 (24px * 4)
+      
+      // 获取可视区域高度
+      const viewportHeight = window.innerHeight;
+      
+      // 只有当footer真正接近视口底部时才需要绝对定位
+      // 计算footer与视口底部的距离
+      const footerBottomDistance = viewportHeight - footerTop;
+      
+      // 底部触发区域：footer进入视口且已经显示了一定比例
+      // 调整这个值可以控制目录开始跟随的时机
+      const bottomTriggerThreshold = Math.min(tocHeight * 0.5, 150); // 目录高度的50%或最多150px
+      
+      // 使用更保守的触发条件，确保只有接近底部时才会跟随
+      const shouldStickToBottom = footerBottomDistance > bottomTriggerThreshold && 
+                                 (footerTop < viewportHeight * 0.9); // footer至少进入视口10%
+      
+      // 计算内容区与页脚的相对关系
+      const contentElement = document.querySelector('.container.relative');
+      const contentBottom = contentElement ? contentElement.getBoundingClientRect().bottom : window.innerHeight;
+      
+      if (containerTop <= headerHeight) {
+        // 如果已经滚动超过了headerHeight（需要考虑目录固定）
+        
+        // 当前理想的定位状态
+        let currentIdealPositionState;
+        
+        // 只有当footer接近视口底部时才改变定位方式
+        if (shouldStickToBottom) {
+          currentIdealPositionState = 'absolute';
+          
+          // 计算底部偏移量，基于footer与视口底部的距离
+          // 这个公式确保了更平滑的过渡
+          const transitionRatio = Math.min(1, (footerBottomDistance - bottomTriggerThreshold) / (tocHeight * 0.7));
+          
+          // 计算目录的最终位置
+          // 向下滚动时让目录更跟随页面
+          let targetTop = containerHeight - tocHeight - (transitionRatio * buffer);
+          
+          // 向上滚动时稍微减弱跟随效果，使过渡更平滑
+          if (scrollDirection === 'up') {
+            const dampingFactor = 0.7; // 阻尼因子，减少向上滚动时的跟随强度
+            targetTop += (1 - transitionRatio) * dampingFactor * buffer;
+          }
+          
+          // 应用绝对定位，让目录跟随到底部
+          setTocStyles({
+            position: 'absolute',
+            top: targetTop,
+            bottom: 'auto',
+            width: containerRect.width
+          });
+        } else {
+          currentIdealPositionState = 'fixed';
+          
+          // 中间滚动区域，使用固定定位
+          setTocStyles({
+            position: 'fixed',
+            top: headerHeight,
+            bottom: 'auto',
+            width: containerRect.width
+          });
+        }
+        
+        // 防抖：如果状态变化，重置计数器；如果状态稳定，增加计数
+        if (currentIdealPositionState !== lastPositionState) {
+          stateStableCounter = 0;
+        } else {
+          stateStableCounter++;
+        }
+        
+        // 记录本次状态，用于下次比较
+        lastPositionState = currentIdealPositionState;
+      } else {
+        // 顶部区域，使用静态定位
+        setTocStyles({
+          position: 'static',
+          top: 0,
+          bottom: 'auto',
+          width: containerRect.width
         });
+        
+        // 重置状态记录
+        lastPositionState = 'static';
+        stateStableCounter = 0;
       }
     };
+    
+    // 添加监听器，使用节流来提高性能
+    let ticking = false;
+    let lastScrollTime = 0;
+    const scrollThreshold = 10; // 滚动防抖阈值（毫秒）
+    
+    const throttledScroll = () => {
+      const now = Date.now();
+      
+      // 使用时间防抖，减少快速滚动时的计算次数
+      if (!ticking && (now - lastScrollTime > scrollThreshold)) {
+        window.requestAnimationFrame(() => {
+          handlePositioning();
+          ticking = false;
+          lastScrollTime = now;
+        });
+        ticking = true;
+      }
+    };
+    
+    window.addEventListener('scroll', throttledScroll);
+    window.addEventListener('resize', handlePositioning);
     
     // 初始计算一次
-    updatePosition();
-    
-    // 滚动处理函数
-    const handleScroll = () => {
-      // 简单判断：当页面滚动超过200px时显示固定目录
-      setShowFixedToc(window.scrollY > 200);
-      // 更新位置（因为滚动可能影响位置）
-      if (!showFixedToc) {
-        updatePosition();
-      }
-    };
-    
-    // 窗口大小变化时重新计算位置
-    const handleResize = () => {
-      updatePosition();
-    };
-    
-    // 添加事件监听
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', handleResize);
+    handlePositioning();
     
     // 清理函数
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', throttledScroll);
+      window.removeEventListener('resize', handlePositioning);
     };
-  }, [showFixedToc]);
+  }, []);
 
   return (
     <section className="py-16">
@@ -106,23 +230,31 @@ export default function BlogDetail({ post }: { post: Post }) {
         <div className="my-2 mb-4 border-t border-border"></div>
         
         {/* 文章内容区域：左侧目录，右侧内容 */}
-        <div className="relative">
-          {/* 桌面版固定目录 - 完全独立于布局流，只在滚动时显示 */}
-          {showFixedToc && (
-            <div className="fixed top-24 z-10 hidden lg:block" 
+        <div className="flex" ref={contentRef}>
+          {/* 左侧目录导航 */}
+          <div 
+            className="hidden lg:block lg:w-64 lg:flex-none" 
+            ref={tocContainerRef}
+          >
+            <div 
+              ref={tocRef}
                  style={{ 
-                   width: `${tocPosition.width}px`,
-                   left: `${tocPosition.left}px` 
-                 }}>
-              {post.content && <TableOfContents content={post.content} />}
-            </div>
-          )}
-          
-          {/* 主内容布局 - 在所有状态下保持一致 */}
-          <div className="flex">
-            {/* 左侧目录导航 - 始终保持相同宽度的占位，但内容在滚动后隐藏 */}
-            <div className="hidden lg:block lg:w-64 lg:flex-none" ref={tocRef}>
-              <div className={showFixedToc ? 'opacity-0' : 'opacity-100'}>
+                position: tocStyles.position,
+                top: tocStyles.position === 'fixed' || tocStyles.position === 'absolute' 
+                  ? tocStyles.top 
+                  : 'auto',
+                width: tocStyles.position !== 'static' ? tocStyles.width : 'auto',
+                maxHeight: '50vh',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(155, 155, 155, 0.5) transparent',
+                transition: tocStyles.position === 'absolute' 
+                  ? 'top 0.5s cubic-bezier(0.33, 1, 0.68, 1)' 
+                  : 'top 0.3s ease, position 0.3s ease',
+                willChange: 'position, top'
+              }}
+              className="pr-4"
+            >
                 {post.content && <TableOfContents content={post.content} />}
               </div>
             </div>
@@ -134,7 +266,6 @@ export default function BlogDetail({ post }: { post: Post }) {
               {/* 移动设备上的目录，显示在内容下方 */}
               <div className="mt-8 lg:hidden">
                 {post.content && <TableOfContents content={post.content} />}
-              </div>
             </div>
           </div>
         </div>
