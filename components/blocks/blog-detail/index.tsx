@@ -332,7 +332,11 @@ export default function BlogDetail({ post }: { post: Post }) {
             )}
 
             <span className="text-muted-foreground">
-              on {post.created_at && moment(post.created_at).fromNow()}
+              created on {post.created_at && moment(post.created_at).fromNow()},
+            </span>
+
+            <span className="text-muted-foreground">
+              updated on {post.updated_at && moment(post.updated_at).fromNow()}
             </span>
             
             {/* 标签显示 */}
