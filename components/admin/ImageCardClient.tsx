@@ -134,7 +134,7 @@ export default function ImageCardClient({ image, onDelete, onUpdate, folders = [
           </div>
         </div>
         <CardContent className="p-4">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 h-[140px]">
             <div className="flex justify-between items-start">
               <div className="font-medium truncate" title={currentImage.original_file_name}>
                 {currentImage.original_file_name}
@@ -144,33 +144,43 @@ export default function ImageCardClient({ image, onDelete, onUpdate, folders = [
               </div>
             </div>
             
-            {currentImage.folder_name && currentImage.folder_name !== 'default' && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <FolderIcon className="h-3 w-3" />
-                <span>{currentImage.folder_name}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <FolderIcon className="h-3 w-3" />
+              <span>{currentImage.folder_name || 'default'}</span>
+            </div>
             
-            {currentImage.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {currentImage.description}
-              </p>
-            )}
-            
-            <div className="flex flex-wrap gap-1 mt-1">
-              {currentImage.tags && currentImage.tags.slice(0, 3).map((tag: string, index: number) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-              {currentImage.tags && currentImage.tags.length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{currentImage.tags.length - 3}
-                </Badge>
+            <div className="min-h-[20px]">
+              {currentImage.description ? (
+                <p className="text-sm text-muted-foreground truncate" title={currentImage.description}>
+                  {currentImage.description}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground/50 italic truncate">
+                  无描述
+                </p>
               )}
             </div>
             
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex flex-wrap gap-1 mt-1 min-h-[24px]">
+              {currentImage.tags && currentImage.tags.length > 0 ? (
+                <>
+                  {currentImage.tags.slice(0, 3).map((tag: string, index: number) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                  {currentImage.tags.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{currentImage.tags.length - 3}
+                    </Badge>
+                  )}
+                </>
+              ) : (
+                <span className="text-xs text-muted-foreground/50 italic">无标签</span>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2 mt-auto">
               <Avatar className="h-6 w-6">
                 <AvatarImage src={currentImage.user?.avatar_url} />
                 <AvatarFallback>{currentImage.user?.nickname?.charAt(0) || 'U'}</AvatarFallback>
