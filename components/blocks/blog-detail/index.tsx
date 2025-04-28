@@ -3,216 +3,14 @@
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useRef, useState } from "react";
-import { X, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { AnimatePresence, motion } from "framer-motion";
+import { Search } from "lucide-react";
 
 import Crumb from "./crumb";
 import Markdown from "@/components/markdown";
 import TableOfContents from "./table-of-contents";
 import { Post } from "@/types/post";
 import moment from "moment";
-
-// 自定义的图片预览组件，专为博客详情页优化
-function ImagePreview({ src, alt, onClose }: { src: string, alt?: string, onClose: () => void }) {
-  const [loading, setLoading] = useState(true);
-  const [zoom, setZoom] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
-  const [isVisible, setIsVisible] = useState(true);
-  const imgRef = useRef<HTMLImageElement>(null);
-  const scrollPosition = useRef(0);
-
-  // 处理ESC键关闭预览
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        handleClose();
-      }
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, []);
-
-  // 防止滚动并记录滚动位置
-  useEffect(() => {
-    // 保存滚动位置
-    scrollPosition.current = window.scrollY;
-    
-    // 计算滚动条宽度
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    const originalPadding = getComputedStyle(document.body).paddingRight;
-    
-    // 锁定滚动，保持宽度
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollPosition.current}px`;
-    document.body.style.width = "100%";
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
-    
-    return () => {
-      // 恢复滚动 - 修复回到顶部的问题
-      const scrollY = scrollPosition.current;
-      
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.paddingRight = originalPadding;
-      
-      // 使用requestAnimationFrame确保DOM更新后再恢复滚动位置
-      requestAnimationFrame(() => {
-        window.scrollTo(0, scrollY);
-      });
-    };
-  }, []);
-
-  // 获取图片原始尺寸
-  const handleImageLoad = () => {
-    setLoading(false);
-    if (imgRef.current) {
-      setNaturalSize({
-        width: imgRef.current.naturalWidth,
-        height: imgRef.current.naturalHeight
-      });
-    }
-  };
-
-  const handleZoomIn = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setZoom(prev => Math.min(prev + 0.25, 3));
-  };
-
-  const handleZoomOut = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setZoom(prev => Math.max(prev - 0.25, 0.5));
-  };
-
-  const handleRotate = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setRotation(prev => (prev + 90) % 360);
-  };
-
-  // 处理关闭并添加动画
-  const handleClose = () => {
-    setIsVisible(false);
-    setTimeout(() => {
-      onClose();
-    }, 300);
-  };
-
-  // 计算合适的样式
-  const getImageStyle = () => {
-    const isRotated = rotation % 180 !== 0;
-    
-    const style: React.CSSProperties = {
-      maxHeight: isRotated ? '90vw' : '90vh',
-      maxWidth: isRotated ? '90vh' : '90vw',
-      transform: `scale(${zoom}) rotate(${rotation}deg)`,
-      transformOrigin: 'center center',
-      transition: 'all 200ms ease-in-out',
-    };
-
-    return style;
-  };
-
-  return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div 
-          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center"
-          style={{ width: '100vw', height: '100vh' }}
-          onClick={handleClose}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-        >
-          <div 
-            className="relative flex items-center justify-center w-full h-full p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* 顶部控制栏 */}
-            <motion.div 
-              className="absolute top-4 left-0 right-0 flex justify-between items-center px-4 z-10"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-            >
-              <div className="flex gap-2">
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  onClick={handleZoomIn}
-                  className="text-white hover:bg-white/20 hover:text-white"
-                >
-                  <ZoomIn className="h-5 w-5" />
-                </Button>
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  onClick={handleZoomOut}
-                  className="text-white hover:bg-white/20 hover:text-white"
-                >
-                  <ZoomOut className="h-5 w-5" />
-                </Button>
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  onClick={handleRotate}
-                  className="text-white hover:bg-white/20 hover:text-white"
-                >
-                  <RotateCw className="h-5 w-5" />
-                </Button>
-              </div>
-              
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                onClick={handleClose}
-                className="text-white hover:bg-white/20 hover:text-white"
-                aria-label="关闭预览"
-              >
-                <X className="h-6 w-6" />
-              </Button>
-            </motion.div>
-            
-            {/* 加载动画 */}
-            {loading && (
-              <motion.div 
-                className="absolute inset-0 flex items-center justify-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <div className="w-10 h-10 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
-              </motion.div>
-            )}
-            
-            {/* 图片容器 */}
-            <motion.div 
-              className="flex items-center justify-center w-full h-full overflow-hidden"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ delay: 0.1, duration: 0.3 }}
-            >
-              <img
-                ref={imgRef}
-                src={src}
-                alt={alt || "图片预览"}
-                className="object-contain"
-                style={getImageStyle()}
-                onLoad={handleImageLoad}
-              />
-            </motion.div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
+import FullScreenPreview from "@/components/admin/FullScreenPreview";
 
 export default function BlogDetail({ post }: { post: Post }) {
   // 处理标签显示
@@ -420,6 +218,95 @@ export default function BlogDetail({ post }: { post: Post }) {
       document.removeEventListener('click', handleImageClick, true);
     };
   }, []);
+
+  // 添加图片悬停放大图标效果
+  useEffect(() => {
+    // 添加样式到 head
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = `
+      .blog-content img {
+        cursor: zoom-in;
+        position: relative;
+        transition: transform 0.3s ease;
+      }
+      
+      .blog-content img:hover {
+        transform: scale(1.01);
+      }
+      
+      .blog-content .img-zoom-icon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+        z-index: 2;
+      }
+      
+      .blog-content .img-container:hover .img-zoom-icon {
+        opacity: 1;
+      }
+      
+      .blog-content .img-container {
+        position: relative;
+        display: inline-block;
+        overflow: hidden;
+      }
+    `;
+    document.head.appendChild(styleEl);
+
+    // 处理图片元素，添加缩放图标
+    const wrapImages = () => {
+      if (!contentRef.current) return;
+      
+      // 查找文章内容中的所有图片
+      const images = contentRef.current.querySelectorAll('.flex-1 img');
+      
+      images.forEach(img => {
+        // 如果图片已经被处理过，跳过
+        if (img.parentElement?.classList.contains('img-container')) return;
+        
+        // 创建容器和放大图标
+        const container = document.createElement('div');
+        container.className = 'img-container';
+        
+        const zoomIcon = document.createElement('div');
+        zoomIcon.className = 'img-zoom-icon';
+        zoomIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>';
+        
+        // 替换原始图片
+        const parent = img.parentElement;
+        parent?.replaceChild(container, img);
+        container.appendChild(img);
+        container.appendChild(zoomIcon);
+      });
+    };
+
+    // 初始包装图片
+    setTimeout(wrapImages, 500); // 延迟以确保Markdown内容已渲染
+
+    // 监听DOM变化，处理动态加载的图片
+    const observer = new MutationObserver(wrapImages);
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true 
+    });
+
+    // 清理函数
+    return () => {
+      document.head.removeChild(styleEl);
+      observer.disconnect();
+    };
+  }, []);
   
   return (
     <section className="py-16">
@@ -496,20 +383,20 @@ export default function BlogDetail({ post }: { post: Post }) {
             </div>
             
             {/* 右侧文章内容 */}
-            <div className="flex-1 lg:ml-8">
+            <div className="flex-1 lg:ml-8 blog-content">
               {post.content && <Markdown content={post.content} />}
               
               {/* 移动设备上的目录，显示在内容下方 */}
               <div className="mt-8 lg:hidden">
                 {post.content && <TableOfContents content={post.content} />}
-              </div>
             </div>
           </div>
         </div>
+      </div>
       
       {/* 图片预览组件 */}
       {previewOpen && (
-        <ImagePreview 
+        <FullScreenPreview 
           src={previewSrc} 
           alt={previewAlt} 
           onClose={() => setPreviewOpen(false)} 

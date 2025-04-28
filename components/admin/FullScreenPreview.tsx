@@ -30,11 +30,27 @@ export default function FullScreenPreview({ src, alt, onClose }: FullScreenPrevi
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
-  // 防止滚动
+  // 防止滚动并修复宽度问题
   useEffect(() => {
+    // 保存原始样式
+    const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+    const originalWidth = document.body.style.width;
+    
+    // 计算滚动条宽度，防止页面抖动
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    
+    // 应用新样式
     document.body.style.overflow = "hidden";
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    document.body.style.width = "100%";
+    
+    // 清理函数
     return () => {
-      document.body.style.overflow = "auto";
+      // 恢复原始样式
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+      document.body.style.width = originalWidth;
     };
   }, []);
 
@@ -94,15 +110,16 @@ export default function FullScreenPreview({ src, alt, onClose }: FullScreenPrevi
     <AnimatePresence>
       {isVisible && (
         <motion.div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden"
           onClick={handleClose}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
+          style={{ width: '100vw', height: '100vh' }}
         >
           <div 
-            className="relative flex items-center justify-center w-full h-full"
+            className="relative flex items-center justify-center w-full h-full overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 顶部控制栏 */}
@@ -175,7 +192,7 @@ export default function FullScreenPreview({ src, alt, onClose }: FullScreenPrevi
                 ref={imgRef}
                 src={src}
                 alt={alt || "图片预览"}
-                className="object-contain"
+                className="object-contain max-h-full max-w-full"
                 style={getImageStyle()}
                 onLoad={handleImageLoad}
               />
