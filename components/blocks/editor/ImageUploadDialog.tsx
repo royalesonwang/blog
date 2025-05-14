@@ -32,6 +32,7 @@ export default function ImageUploadDialog({
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [altText, setAltText] = useState("");
@@ -46,6 +47,7 @@ export default function ImageUploadDialog({
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
       setUploadedUrl(null);
+      setThumbnailUrl(null);
       setFileName(null);
     }
   };
@@ -76,8 +78,11 @@ export default function ImageUploadDialog({
 
       if (response.ok) {
         setUploadedUrl(data.url);
+        setThumbnailUrl(data.thumbnailUrl);
         setFileName(data.fileName);
         toast.success("Image uploaded successfully to Cloudflare R2");
+        
+        console.log("Image uploaded with thumbnail:", data.thumbnailUrl);
       } else {
         throw new Error(data.message || "Failed to upload image");
       }
@@ -100,6 +105,7 @@ export default function ImageUploadDialog({
   const resetForm = () => {
     setFile(null);
     setUploadedUrl(null);
+    setThumbnailUrl(null);
     setFileName(null);
     setDescription("");
     setAltText("");
@@ -116,7 +122,8 @@ export default function ImageUploadDialog({
             Upload Image to Cloudflare R2
           </DialogTitle>
           <DialogDescription>
-            Upload an image to use in your content. The image will be stored in Cloudflare R2.
+            Upload an image to use in your content. Large images (over 1440px) will be automatically 
+            resized, and a thumbnail (max 640px) will be generated for display.
           </DialogDescription>
         </DialogHeader>
 
@@ -205,7 +212,7 @@ export default function ImageUploadDialog({
               <div className="flex items-center justify-center h-48 bg-muted rounded-md mb-4">
                 {file ? (
                   <img
-                    src={uploadedUrl || URL.createObjectURL(file)}
+                    src={thumbnailUrl || uploadedUrl || URL.createObjectURL(file)}
                     alt="Preview"
                     className="max-h-full max-w-full object-contain"
                   />
@@ -222,7 +229,7 @@ export default function ImageUploadDialog({
                   </div>
                   
                   <div>
-                    <Label>R2 Public URL:</Label>
+                    <Label>R2 Public URL (Original):</Label>
                     <div className="flex gap-2 mt-1">
                       <Input value={uploadedUrl} readOnly className="text-xs" />
                       <Button 
@@ -236,6 +243,31 @@ export default function ImageUploadDialog({
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Original image (max 1440px if resized)
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <Label>Thumbnail URL:</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input value={thumbnailUrl || ''} readOnly className="text-xs" />
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => {
+                          if (thumbnailUrl) {
+                            navigator.clipboard.writeText(thumbnailUrl);
+                            toast.success("Thumbnail URL copied");
+                          }
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Optimized for display (max 640x640px)
+                    </p>
                   </div>
                 </div>
               )}

@@ -57,8 +57,11 @@ export async function GET(request: NextRequest) {
         file_name,
         original_file_name,
         public_url,
+        thumbnail_url,
         file_size,
         mime_type,
+        width,
+        height,
         description,
         alt_text,
         tags,
@@ -233,7 +236,7 @@ export async function DELETE(request: NextRequest) {
     
     // 2. 从存储中删除文件
     try {
-      // 准备从R2删除
+      // 准备从R2删除原始文件
       const deleteParams = {
         Bucket: BUCKET_NAME,
         Key: imageData.file_name,
@@ -242,7 +245,23 @@ export async function DELETE(request: NextRequest) {
       const command = new DeleteObjectCommand(deleteParams);
       await S3.send(command);
       
-      console.log("R2 delete successful for:", imageData.file_name);
+      console.log("R2 delete successful for original:", imageData.file_name);
+      
+      // 删除对应的缩略图
+      // 从file_name解析路径，替换uploads为thumbnail
+      if (imageData.file_name && imageData.file_name.startsWith('uploads/')) {
+        const thumbnailPath = imageData.file_name.replace('uploads/', 'thumbnail/');
+        
+        const thumbnailDeleteParams = {
+          Bucket: BUCKET_NAME,
+          Key: thumbnailPath,
+        };
+        
+        const thumbnailCommand = new DeleteObjectCommand(thumbnailDeleteParams);
+        await S3.send(thumbnailCommand);
+        
+        console.log("R2 delete successful for thumbnail:", thumbnailPath);
+      }
     } catch (r2Error) {
       console.error("R2 delete error:", r2Error);
       // 即使R2删除失败也继续，因为数据库记录已经删除

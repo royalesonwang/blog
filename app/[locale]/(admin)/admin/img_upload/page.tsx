@@ -14,6 +14,7 @@ export default function ImageUploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [altText, setAltText] = useState("");
@@ -54,8 +55,17 @@ export default function ImageUploadPage() {
 
       if (response.ok) {
         setUploadedUrl(data.url);
+        setThumbnailUrl(data.thumbnailUrl);
         setFileName(data.fileName);
         toast.success("Image uploaded successfully to Cloudflare R2");
+        
+        // 记录缩略图和尺寸信息
+        console.log("Upload successful with details:", {
+          original: data.url,
+          thumbnail: data.thumbnailUrl,
+          width: data.width,
+          height: data.height
+        });
       } else {
         throw new Error(data.message || "Failed to upload image");
       }
@@ -76,9 +86,11 @@ export default function ImageUploadPage() {
       
       <Alert className="mb-6 bg-blue-50">
         <Info className="h-4 w-4" />
-        <AlertTitle>About Cloudflare R2</AlertTitle>
+        <AlertTitle>About Cloudflare R2 Image Upload</AlertTitle>
         <AlertDescription>
-          Images are uploaded to Cloudflare R2 storage. R2 provides S3-compatible object storage with no egress fees.
+          Images are uploaded to Cloudflare R2 storage. Large images (over 1440px) will be automatically 
+          resized to optimize storage and loading speed. Additionally, a thumbnail (max 640px) will be 
+          generated for each image.
         </AlertDescription>
       </Alert>
       
@@ -184,7 +196,7 @@ export default function ImageUploadPage() {
             <div className="flex items-center justify-center h-64 bg-muted rounded-md">
               {file ? (
                 <img
-                  src={uploadedUrl || URL.createObjectURL(file)}
+                  src={thumbnailUrl || uploadedUrl || URL.createObjectURL(file)}
                   alt="Preview"
                   className="max-h-full max-w-full object-contain"
                 />
@@ -206,7 +218,7 @@ export default function ImageUploadPage() {
                 </div>
                 
                 <div>
-                  <Label>R2 Public URL:</Label>
+                  <Label>R2 Public URL (Original):</Label>
                   <div className="flex gap-2 mt-1">
                     <Input value={uploadedUrl} readOnly />
                     <Button 
@@ -220,6 +232,31 @@ export default function ImageUploadPage() {
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Original image (max 1440px if resized)
+                  </p>
+                </div>
+                
+                <div>
+                  <Label>Thumbnail URL:</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input value={thumbnailUrl || ''} readOnly />
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        if (thumbnailUrl) {
+                          navigator.clipboard.writeText(thumbnailUrl);
+                          toast.success("Thumbnail URL copied to clipboard");
+                        }
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Thumbnail is optimized for web display (max 640x640px)
+                  </p>
                 </div>
               </div>
             )}

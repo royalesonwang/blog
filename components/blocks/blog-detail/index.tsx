@@ -205,7 +205,14 @@ export default function BlogDetail({ post }: { post: Post }) {
         
         // 获取图片信息
         const imgElement = target as HTMLImageElement;
-        setPreviewSrc(imgElement.src);
+        
+        // 转换URL从缩略图到原图（如果需要）
+        let originalSrc = imgElement.src;
+        if (originalSrc.includes('/thumbnail/')) {
+          originalSrc = originalSrc.replace('/thumbnail/', '/uploads/');
+        }
+        
+        setPreviewSrc(originalSrc);
         setPreviewAlt(imgElement.alt || '图片预览');
         setPreviewOpen(true);
       }
@@ -264,7 +271,7 @@ export default function BlogDetail({ post }: { post: Post }) {
     `;
     document.head.appendChild(styleEl);
 
-    // 处理图片元素，添加缩放图标
+    // 处理图片元素，添加缩放图标并将图片URL转换为缩略图URL
     const wrapImages = () => {
       if (!contentRef.current) return;
       
@@ -272,8 +279,18 @@ export default function BlogDetail({ post }: { post: Post }) {
       const images = contentRef.current.querySelectorAll('.flex-1 img');
       
       images.forEach(img => {
+        const imgElement = img as HTMLImageElement;
+        
         // 如果图片已经被处理过，跳过
-        if (img.parentElement?.classList.contains('img-container')) return;
+        if (imgElement.parentElement?.classList.contains('img-container')) return;
+        
+        // 将图片URL从原图转换为缩略图（如果可能）
+        // 保存原始URL作为自定义属性，以便点击时恢复
+        if (imgElement.src.includes('/uploads/')) {
+          const originalSrc = imgElement.src;
+          imgElement.setAttribute('data-original-src', originalSrc);
+          imgElement.src = originalSrc.replace('/uploads/', '/thumbnail/');
+        }
         
         // 创建容器和放大图标
         const container = document.createElement('div');
@@ -284,9 +301,9 @@ export default function BlogDetail({ post }: { post: Post }) {
         zoomIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>';
         
         // 替换原始图片
-        const parent = img.parentElement;
-        parent?.replaceChild(container, img);
-        container.appendChild(img);
+        const parent = imgElement.parentElement;
+        parent?.replaceChild(container, imgElement);
+        container.appendChild(imgElement);
         container.appendChild(zoomIcon);
       });
     };
@@ -332,11 +349,10 @@ export default function BlogDetail({ post }: { post: Post }) {
             )}
 
             <span className="text-muted-foreground">
-              created on {post.created_at && moment(post.created_at).fromNow()},
-            </span>
-
-            <span className="text-muted-foreground">
-              updated on {post.updated_at && moment(post.updated_at).fromNow()}
+              created on {post.created_at && moment(post.created_at).fromNow()}
+              {post.updated_at && post.updated_at !== post.created_at && (
+                <>, updated on {moment(post.updated_at).fromNow()}</>
+              )}
             </span>
             
             {/* 标签显示 */}
