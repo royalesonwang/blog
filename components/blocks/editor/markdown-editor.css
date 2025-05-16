@@ -29,6 +29,59 @@
   padding: 0.5rem;
 }
 
+/* 全屏模式下固定工具栏 */
+.fixed-fullscreen-toolbar .mdxeditor .toolbar,
+.fixed-fullscreen-toolbar .mdxeditor [role="toolbar"] {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: hsl(var(--background)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 全屏模式下的编辑器容器 */
+.fullscreen-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* 全屏模式下的编辑区域 */
+.fullscreen-editor-container .mdxeditor {
+  flex: 1;
+  border: none;
+  border-radius: 0;
+  height: 100%;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 全屏模式下覆盖编辑区域内容的默认高度 */
+.fullscreen-editor-container .mdxeditor {
+  min-height: 100vh;
+}
+
+/* 全屏模式下的编辑区域内容 */
+.fullscreen-editor-container .mdxeditor [data-lexical-editor] {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  height: calc(100vh - 56px); /* 减去工具栏高度 */
+}
+
+/* 添加一个helper类用于固定内容区域滚动 */
+.fullscreen-scrollable-content {
+  overflow-y: auto !important;
+  height: calc(100vh - 56px) !important;
+  max-height: unset !important;
+  padding-bottom: 5rem !important;
+}
+
 /* 自定义工具栏按钮 */
 .toolbar-btn {
   display: flex;
@@ -333,3 +386,38 @@
 .mdxeditor [class*="_codeMirrorToolbar_"] button {
   opacity: 0.9;
 }
+
+/* u5f15u7528u5757u6837u5f0f - u4e0eu535au5ba2u8be6u60c5u9875u9762u4fddu6301u4e00u81f4 */
+.mdxeditor [data-lexical-editor] blockquote {
+  padding: 0.75rem 1rem !important;
+  margin: 1rem 0 !important;
+  border-left: 4px solid var(--markdown-blockquote-border-color, hsl(var(--primary) / 0.5)) !important;
+  background-color: var(--markdown-blockquote-bg-color, hsl(var(--muted) / 0.3)) !important;
+  border-radius: 0.25rem !important;
+  font-style: italic !important;
+  color: var(--markdown-text-color, hsl(var(--foreground))) !important;
+}
+
+.mdxeditor [data-lexical-editor] blockquote p {
+  margin-bottom: 0 !important;
+}
+
+.mdxeditor [data-lexical-editor] blockquote p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.mdxeditor [data-lexical-editor] blockquote cite {
+  display: block !important;
+  margin-top: 0.5rem !important;
+  font-size: 0.875em !important;
+  text-align: right !important;
+}
+
+/* u5728u5168u5c4fu6a21u5f0fu4e0bu7684u5f15u7528u5757u7279u6b8au6837u5f0f */
+.fullscreen-scrollable-content blockquote {
+  max-width: 90% !important;
+  margin-left: 1rem !important;
+  margin-right: 1rem !important;
+}
+
+/* u79fbu9664u7279u5b9au5143u7d20u7684u80ccu666fu8272 - u6a21u5f0fu9009u62e9u5668 */

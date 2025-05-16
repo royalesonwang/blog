@@ -39,7 +39,7 @@ import "./markdown-editor.css"; // 导入新的CSS文件
 import ImageUploadDialog from "./ImageUploadDialog";
 import CloudImageDialog from "./CloudImageDialog";
 import { Button } from "@/components/ui/button";
-import { CloudUpload, FolderOpenIcon } from "lucide-react";
+import { CloudUpload, FolderOpenIcon, Maximize, Minimize, Quote } from "lucide-react";
 
 // Custom toolbar button component for R2 image upload
 function CloudImageUploadButton({ onClick }: { onClick: () => void }) {
@@ -71,14 +71,52 @@ function CloudImageSelectButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+// Custom toolbar button component for inserting quotes
+function InsertQuoteButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title="Insert Blockquote"
+      className="toolbar-btn"
+      aria-label="Insert blockquote"
+    >
+      <Quote className="h-4 w-4 text-amber-500" />
+    </button>
+  );
+}
+
+// Custom toolbar button component for fullscreen toggle
+function FullscreenButton({ onClick, isFullscreen }: { onClick: () => void; isFullscreen: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+      className="toolbar-btn"
+      aria-label={isFullscreen ? "Exit fullscreen mode" : "Enter fullscreen mode"}
+    >
+      {isFullscreen ? (
+        <Minimize className="h-4 w-4 text-purple-500" />
+      ) : (
+        <Maximize className="h-4 w-4 text-purple-500" />
+      )}
+    </button>
+  );
+}
+
 export default function MarkdownEditor({
   value,
   onChange,
   slug,
+  isFullscreen = false,
+  onFullscreenToggle,
 }: {
   value: string;
   onChange: (value: string) => void;
   slug?: string;
+  isFullscreen?: boolean;
+  onFullscreenToggle?: () => void;
 }) {
   const editorRef = useRef<MDXEditorMethods>(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
@@ -128,6 +166,14 @@ export default function MarkdownEditor({
     setIsCloudImageDialogOpen(true);
   };
 
+  // Insert a blockquote at the current cursor position
+  const insertBlockquote = () => {
+    if (editorRef.current) {
+      const quoteText = `> 引用内容\n\n`;
+      editorRef.current.insertMarkdown(quoteText);
+    }
+  };
+
   // Custom image upload handler that opens our dialog
   const handleImageUpload: ImageUploadHandler = async (file) => {
     return new Promise((resolve) => {
@@ -166,13 +212,20 @@ export default function MarkdownEditor({
     }
   };
 
+  // Handle fullscreen toggle
+  const handleFullscreenToggle = () => {
+    if (onFullscreenToggle) {
+      onFullscreenToggle();
+    }
+  };
+
   return (
-    <div className="w-full">
+    <div className={`w-full ${isFullscreen ? 'h-full' : ''}`}>
       <MDXEditor
         ref={editorRef}
         markdown={value || ""}
         onChange={onChange}
-        className="mdx-editor-custom md-list-fix"
+        className={`mdx-editor-custom md-list-fix ${isFullscreen ? 'fullscreen-editor' : ''}`}
         plugins={[
           headingsPlugin(),
           listsPlugin({
@@ -230,6 +283,7 @@ export default function MarkdownEditor({
                 <BlockTypeSelect />
                 <Separator />
                 <ListsToggle />
+                <InsertQuoteButton onClick={insertBlockquote} />
                 <Separator />
                 <CodeToggle />
                 <Separator />
@@ -241,11 +295,13 @@ export default function MarkdownEditor({
                 <Separator />
                 <InsertThematicBreak />
                 <InsertTable />
+                <Separator />
+                <FullscreenButton onClick={handleFullscreenToggle} isFullscreen={isFullscreen} />
               </DiffSourceToggleWrapper>
             )
           })
         ]}
-        contentEditableClassName="prose dark:prose-invert max-w-none"
+        contentEditableClassName={`prose dark:prose-invert max-w-none ${isFullscreen ? 'fullscreen-scrollable-content' : ''}`}
       />
       
       {/* Image upload dialog */}

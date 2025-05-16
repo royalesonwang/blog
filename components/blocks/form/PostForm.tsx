@@ -28,7 +28,9 @@ import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
 import Icon from "@/components/icon";
 import MarkdownEditor from "../editor/markdown";
+import FullscreenEditor from "../editor/FullscreenEditor";
 import CoverImageSelector from "@/components/blocks/coverimage/CoverImageSelector";
+import { useState } from "react";
 
 // Function to generate slug from title
 const generateSlug = (title: string): string => {
@@ -120,6 +122,13 @@ export default function PostForm({
     defaultValues,
   });
 
+  // State for fullscreen mode
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  // Get the markdown field
+  const markdownField = fields.find(item => item.type === "markdown_editor");
+  // Current content for the fullscreen editor
+  const markdownContent = markdownField ? form.watch(markdownField.name || "") : "";
+
   // Handler for title blur event to generate slug
   const handleTitleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const titleValue = e.target.value;
@@ -128,6 +137,18 @@ export default function PostForm({
     if (titleValue) {
       const newSlug = generateSlug(titleValue);
       form.setValue("slug", newSlug);
+    }
+  };
+
+  // Toggle fullscreen mode
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  // Update markdown content from fullscreen editor
+  const handleFullscreenContentChange = (value: string) => {
+    if (markdownField && markdownField.name) {
+      form.setValue(markdownField.name, value);
     }
   };
 
@@ -167,9 +188,6 @@ export default function PostForm({
   }
 
   // Separate fields for better rendering
-  const markdownField = fields.find(item => item.type === "markdown_editor");
-  
-  // Filter out the cover_url field as we'll render it separately
   const regularFields = fields.filter(
     item => item.type !== "markdown_editor" && item.name !== "cover_url"
   );
@@ -183,196 +201,209 @@ export default function PostForm({
   );
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="w-full max-w-5xl space-y-6 px-2 pb-8"
-      >
-        <div className="space-y-4">
-          {/* Regular form fields */}
-          {beforeCoverFields.map((item, index) => (
-            <div key={index} className="w-full max-w-md">
-              <FormField
-                control={form.control}
-                name={item.name || ""}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {item.title}
-                      {item.validation?.required && (
-                        <span className="text-red-500 ml-1">*</span>
+    <>
+      {/* Fullscreen editor */}
+      {isFullscreen && markdownField && (
+        <FullscreenEditor
+          value={markdownContent}
+          onChange={handleFullscreenContentChange}
+          slug={form.watch("slug") || "default"}
+          onClose={toggleFullscreen}
+        />
+      )}
+
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="w-full max-w-5xl space-y-6 px-2 pb-8"
+        >
+          <div className="space-y-4">
+            {/* Regular form fields */}
+            {beforeCoverFields.map((item, index) => (
+              <div key={index} className="w-full max-w-md">
+                <FormField
+                  control={form.control}
+                  name={item.name || ""}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {item.title}
+                        {item.validation?.required && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </FormLabel>
+                      <FormControl>
+                        {item.type === "textarea" ? (
+                          <Textarea
+                            {...field}
+                            placeholder={item.placeholder}
+                            className="resize-none"
+                            {...item.attributes}
+                          />
+                        ) : item.type === "select" ? (
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            {...item.attributes}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={item.placeholder} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {item.options?.map((option: any) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.title}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            {...field}
+                            type={item.type || "text"}
+                            placeholder={item.placeholder}
+                            {...item.attributes}
+                            // Add onBlur handler for title field
+                            {...(item.name === "title" ? { onBlur: handleTitleBlur } : {})}
+                          />
+                        )}
+                      </FormControl>
+                      {item.tip && (
+                        <FormDescription
+                          dangerouslySetInnerHTML={{ __html: item.tip }}
+                        />
                       )}
-                    </FormLabel>
-                    <FormControl>
-                      {item.type === "textarea" ? (
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            ))}
+
+            {/* Description field */}
+            {descriptionField && (
+              <div className="w-full max-w-md">
+                <FormField
+                  control={form.control}
+                  name={descriptionField.name || ""}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {descriptionField.title}
+                        {descriptionField.validation?.required && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </FormLabel>
+                      <FormControl>
                         <Textarea
                           {...field}
-                          placeholder={item.placeholder}
+                          placeholder={descriptionField.placeholder}
                           className="resize-none"
-                          {...item.attributes}
+                          {...descriptionField.attributes}
                         />
-                      ) : item.type === "select" ? (
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          {...item.attributes}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={item.placeholder} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {item.options?.map((option: any) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.title}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Input
-                          {...field}
-                          type={item.type || "text"}
-                          placeholder={item.placeholder}
-                          {...item.attributes}
-                          // Add onBlur handler for title field
-                          {...(item.name === "title" ? { onBlur: handleTitleBlur } : {})}
+                      </FormControl>
+                      {descriptionField.tip && (
+                        <FormDescription
+                          dangerouslySetInnerHTML={{ __html: descriptionField.tip }}
                         />
                       )}
-                    </FormControl>
-                    {item.tip && (
-                      <FormDescription
-                        dangerouslySetInnerHTML={{ __html: item.tip }}
-                      />
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          ))}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
 
-          {/* Description field */}
-          {descriptionField && (
+            {/* Cover Image Selector */}
             <div className="w-full max-w-md">
               <FormField
                 control={form.control}
-                name={descriptionField.name || ""}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {descriptionField.title}
-                      {descriptionField.validation?.required && (
-                        <span className="text-red-500 ml-1">*</span>
-                      )}
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder={descriptionField.placeholder}
-                        className="resize-none"
-                        {...descriptionField.attributes}
-                      />
-                    </FormControl>
-                    {descriptionField.tip && (
-                      <FormDescription
-                        dangerouslySetInnerHTML={{ __html: descriptionField.tip }}
-                      />
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
+                name="cover_url"
+                render={({ field }) => {
+                  console.log("Rendering CoverImageSelector with value:", field.value);
+                  return (
+                    <FormItem>
+                      <FormLabel>
+                        Cover Image
+                      </FormLabel>
+                      <FormControl>
+                        <CoverImageSelector
+                          value={field.value}
+                          onChange={(newValue) => {
+                            console.log("CoverImageSelector onChange called with:", newValue);
+                            field.onChange(newValue);
+                            // Explicitly set the value in the form
+                            form.setValue("cover_url", newValue);
+                          }}
+                          placeholder="Cover Image URL"
+                          error={form.formState.errors.cover_url?.message as string}
+                          defaultFolder="cover_image"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        You can upload a new image or select from existing images in cloud storage
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
             </div>
-          )}
 
-          {/* Cover Image Selector */}
-          <div className="w-full max-w-md">
-            <FormField
-              control={form.control}
-              name="cover_url"
-              render={({ field }) => {
-                console.log("Rendering CoverImageSelector with value:", field.value);
-                return (
-                  <FormItem>
-                    <FormLabel>
-                      Cover Image
-                    </FormLabel>
-                    <FormControl>
-                      <CoverImageSelector
-                        value={field.value}
-                        onChange={(newValue) => {
-                          console.log("CoverImageSelector onChange called with:", newValue);
-                          field.onChange(newValue);
-                          // Explicitly set the value in the form
-                          form.setValue("cover_url", newValue);
-                        }}
-                        placeholder="Cover Image URL"
-                        error={form.formState.errors.cover_url?.message as string}
-                        defaultFolder="cover_image"
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      You can upload a new image or select from existing images in cloud storage
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
+            {/* Markdown editor */}
+            {markdownField && !isFullscreen && (
+              <div className="w-full mt-6">
+                <FormField
+                  control={form.control}
+                  name={markdownField.name || ""}
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormLabel>
+                        {markdownField.title}
+                        {markdownField.validation?.required && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </FormLabel>
+                      <FormControl>
+                        <MarkdownEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                          slug={form.watch("slug") || "default"}
+                          onFullscreenToggle={toggleFullscreen}
+                        />
+                      </FormControl>
+                      {markdownField.tip && (
+                        <FormDescription
+                          dangerouslySetInnerHTML={{ __html: markdownField.tip }}
+                        />
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Markdown editor */}
-          {markdownField && (
-            <div className="w-full mt-6">
-              <FormField
-                control={form.control}
-                name={markdownField.name || ""}
-                render={({ field }) => (
-                  <FormItem className="w-full">
-                    <FormLabel>
-                      {markdownField.title}
-                      {markdownField.validation?.required && (
-                        <span className="text-red-500 ml-1">*</span>
-                      )}
-                    </FormLabel>
-                    <FormControl>
-                      <MarkdownEditor
-                        value={field.value}
-                        onChange={field.onChange}
-                        slug={form.watch("slug") || "default"}
-                      />
-                    </FormControl>
-                    {markdownField.tip && (
-                      <FormDescription
-                        dangerouslySetInnerHTML={{ __html: markdownField.tip }}
-                      />
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          {submit?.button && (
+            <Button
+              type="submit"
+              variant={submit.button.variant}
+              className="flex items-center justify-center gap-2 font-semibold mt-6"
+              disabled={loading}
+            >
+              {submit.button.title}
+              {loading ? (
+                <Loader className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                submit.button.icon && (
+                  <Icon name={submit.button.icon} className="size-4" />
+                )
+              )}
+            </Button>
           )}
-        </div>
-
-        {submit?.button && (
-          <Button
-            type="submit"
-            variant={submit.button.variant}
-            className="flex items-center justify-center gap-2 font-semibold mt-6"
-            disabled={loading}
-          >
-            {submit.button.title}
-            {loading ? (
-              <Loader className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              submit.button.icon && (
-                <Icon name={submit.button.icon} className="size-4" />
-              )
-            )}
-          </Button>
-        )}
-      </form>
-    </Form>
+        </form>
+      </Form>
+    </>
   );
 } 
