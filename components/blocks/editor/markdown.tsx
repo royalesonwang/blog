@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   MDXEditor,
   headingsPlugin,
@@ -39,7 +39,7 @@ import "./markdown-editor.css"; // 导入新的CSS文件
 import ImageUploadDialog from "./ImageUploadDialog";
 import CloudImageDialog from "./CloudImageDialog";
 import { Button } from "@/components/ui/button";
-import { CloudUpload, FolderOpenIcon, Maximize, Minimize, Quote } from "lucide-react";
+import { CloudUpload, FolderOpenIcon } from "lucide-react";
 
 // Custom toolbar button component for R2 image upload
 function CloudImageUploadButton({ onClick }: { onClick: () => void }) {
@@ -71,67 +71,35 @@ function CloudImageSelectButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-// Custom toolbar button component for inserting quotes
-function InsertQuoteButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title="Insert Blockquote"
-      className="toolbar-btn"
-      aria-label="Insert blockquote"
-    >
-      <Quote className="h-4 w-4 text-amber-500" />
-    </button>
-  );
-}
-
-// Custom toolbar button component for fullscreen toggle
-function FullscreenButton({ onClick, isFullscreen }: { onClick: () => void; isFullscreen: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-      className="toolbar-btn"
-      aria-label={isFullscreen ? "Exit fullscreen mode" : "Enter fullscreen mode"}
-    >
-      {isFullscreen ? (
-        <Minimize className="h-4 w-4 text-purple-500" />
-      ) : (
-        <Maximize className="h-4 w-4 text-purple-500" />
-      )}
-    </button>
-  );
-}
-
 export default function MarkdownEditor({
   value,
   onChange,
   slug,
-  isFullscreen = false,
-  onFullscreenToggle,
 }: {
   value: string;
   onChange: (value: string) => void;
   slug?: string;
-  isFullscreen?: boolean;
-  onFullscreenToggle?: () => void;
 }) {
   const editorRef = useRef<MDXEditorMethods>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isCloudImageDialogOpen, setIsCloudImageDialogOpen] = useState(false);
   const [imageUploadCallback, setImageUploadCallback] = useState<((url: string) => void) | null>(null);
   const [isDirectUpload, setIsDirectUpload] = useState(false);
 
   // 添加内联样式直接修改工具栏背景
-  React.useEffect(() => {
+  useEffect(() => {
     // DOM加载后执行
     const toolbars = document.querySelectorAll('.mdxeditor .toolbar, .mdxeditor [role="toolbar"]');
     toolbars.forEach(toolbar => {
       if (toolbar instanceof HTMLElement) {
         toolbar.style.backgroundColor = 'transparent';
         toolbar.style.borderBottom = '1px solid var(--border-color)';
+        // 确保工具栏固定在顶部
+        toolbar.style.position = 'sticky';
+        toolbar.style.top = '0';
+        toolbar.style.zIndex = '10';
+        toolbar.style.width = '100%';
       }
     });
 
@@ -142,6 +110,8 @@ export default function MarkdownEditor({
       specificElements.forEach(element => {
         if (element instanceof HTMLElement) {
           element.style.backgroundColor = 'transparent';
+          // 确保模式选择器在滚动时保持在右侧
+          element.style.zIndex = '11';
         }
       });
 
@@ -150,6 +120,14 @@ export default function MarkdownEditor({
       dropdowns.forEach(dropdown => {
         if (dropdown instanceof HTMLElement) {
           dropdown.style.backgroundColor = 'transparent';
+        }
+      });
+
+      // 确保弹出菜单和对话框正确显示
+      const popups = document.querySelectorAll('.mdxeditor [data-radix-popper-content-wrapper], .mdxeditor .popup-container');
+      popups.forEach(popup => {
+        if (popup instanceof HTMLElement) {
+          popup.style.zIndex = '20';
         }
       });
     }, 500);
@@ -164,14 +142,6 @@ export default function MarkdownEditor({
   // Open the cloud image selection dialog
   const openCloudImageDialog = () => {
     setIsCloudImageDialogOpen(true);
-  };
-
-  // Insert a blockquote at the current cursor position
-  const insertBlockquote = () => {
-    if (editorRef.current) {
-      const quoteText = `> 引用内容\n\n`;
-      editorRef.current.insertMarkdown(quoteText);
-    }
   };
 
   // Custom image upload handler that opens our dialog
@@ -212,20 +182,13 @@ export default function MarkdownEditor({
     }
   };
 
-  // Handle fullscreen toggle
-  const handleFullscreenToggle = () => {
-    if (onFullscreenToggle) {
-      onFullscreenToggle();
-    }
-  };
-
   return (
-    <div className={`w-full ${isFullscreen ? 'h-full' : ''}`}>
+    <div className="w-full" ref={editorContainerRef}>
       <MDXEditor
         ref={editorRef}
         markdown={value || ""}
         onChange={onChange}
-        className={`mdx-editor-custom md-list-fix ${isFullscreen ? 'fullscreen-editor' : ''}`}
+        className="mdx-editor-custom md-list-fix"
         plugins={[
           headingsPlugin(),
           listsPlugin({
@@ -283,7 +246,6 @@ export default function MarkdownEditor({
                 <BlockTypeSelect />
                 <Separator />
                 <ListsToggle />
-                <InsertQuoteButton onClick={insertBlockquote} />
                 <Separator />
                 <CodeToggle />
                 <Separator />
@@ -295,13 +257,11 @@ export default function MarkdownEditor({
                 <Separator />
                 <InsertThematicBreak />
                 <InsertTable />
-                <Separator />
-                <FullscreenButton onClick={handleFullscreenToggle} isFullscreen={isFullscreen} />
               </DiffSourceToggleWrapper>
             )
           })
         ]}
-        contentEditableClassName={`prose dark:prose-invert max-w-none ${isFullscreen ? 'fullscreen-scrollable-content' : ''}`}
+        contentEditableClassName="prose dark:prose-invert max-w-none"
       />
       
       {/* Image upload dialog */}
