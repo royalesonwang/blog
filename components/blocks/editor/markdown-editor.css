@@ -14,6 +14,12 @@
   max-width: none;
   margin: 0 auto;
   position: relative; /* 添加相对定位，作为工具栏的定位父元素 */
+
+  /* 添加性能优化相关样式 */
+  /* 启用GPU加速，减少渲染延迟 */
+  transform: translateZ(0);
+  will-change: contents;
+  contain: content;  /* 提示浏览器这个元素的内容不会影响页面的其他部分，提高渲染性能 */
 }
 
 /* 编辑区域样式 */
@@ -24,6 +30,18 @@
   max-height: calc(100vh - 200px) !important;
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--muted) / 0.5) transparent;
+
+  /* 优化编辑区域的性能，启用GPU加速 */
+  transform: translateZ(0);
+  will-change: contents;
+  contain: content;
+  backface-visibility: hidden;
+}
+
+/* 修复Mac上的输入滞后问题 */
+.mdxeditor [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* 强制覆盖工具栏样式，并使工具栏固定在编辑器顶部 */
@@ -352,7 +370,6 @@
   font-style: italic;
 }
 
-
 /* 覆盖CodeMirror工具栏样式 */
 .mdxeditor ._codeMirrorToolbar_uazmk_408,
 .mdxeditor [class*="_codeMirrorToolbar_"] {
@@ -388,4 +405,37 @@
 
 .mdxeditor [data-lexical-editor]::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--muted));
+}
+
+/* 减少滚动时的重绘开销 */
+.mdxeditor [data-lexical-editor]::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mdxeditor [data-lexical-editor]::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.mdxeditor [data-lexical-editor]::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* 修复长内容渲染性能 */
+.mdxeditor p, 
+.mdxeditor h1, 
+.mdxeditor h2, 
+.mdxeditor h3, 
+.mdxeditor h4, 
+.mdxeditor h5, 
+.mdxeditor h6, 
+.mdxeditor ul, 
+.mdxeditor ol, 
+.mdxeditor blockquote {
+  contain: layout style;  /* 包含布局和样式，避免影响页面其他部分 */
+}
+
+/* 优化输入过程中的内容更新 */
+.mdxeditor [data-lexical-editor] [data-editor-text] {
+  text-rendering: optimizeSpeed;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   MDXEditor,
   headingsPlugin,
@@ -40,6 +40,27 @@ import ImageUploadDialog from "./ImageUploadDialog";
 import CloudImageDialog from "./CloudImageDialog";
 import { Button } from "@/components/ui/button";
 import { CloudUpload, FolderOpenIcon } from "lucide-react";
+
+// 防抖函数 - 用于优化输入性能
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  
+  return function(this: any, ...args: Parameters<T>) {
+    const context = this;
+    
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    
+    timeout = setTimeout(() => {
+      timeout = null;
+      func.apply(context, args);
+    }, wait);
+  };
+}
 
 // Custom toolbar button component for R2 image upload
 function CloudImageUploadButton({ onClick }: { onClick: () => void }) {
@@ -87,50 +108,70 @@ export default function MarkdownEditor({
   const [imageUploadCallback, setImageUploadCallback] = useState<((url: string) => void) | null>(null);
   const [isDirectUpload, setIsDirectUpload] = useState(false);
 
-  // 添加内联样式直接修改工具栏背景
+  // 使用防抖处理onChange事件
+  const debouncedOnChange = useCallback(
+    debounce((markdown: string) => {
+      onChange(markdown);
+    }, 200),
+    [onChange]
+  );
+
+  // 优化DOM操作，减少不必要的重绘
   useEffect(() => {
-    // DOM加载后执行
-    const toolbars = document.querySelectorAll('.mdxeditor .toolbar, .mdxeditor [role="toolbar"]');
-    toolbars.forEach(toolbar => {
-      if (toolbar instanceof HTMLElement) {
-        toolbar.style.backgroundColor = 'transparent';
-        toolbar.style.borderBottom = '1px solid var(--border-color)';
-        // 确保工具栏固定在顶部
-        toolbar.style.position = 'sticky';
-        toolbar.style.top = '0';
-        toolbar.style.zIndex = '10';
-        toolbar.style.width = '100%';
-      }
-    });
+    // 创建一个函数用于应用样式
+    const applyStyles = () => {
+      if (!editorContainerRef.current) return;
 
-    // 修改模式选择器和下拉菜单的背景
-    setTimeout(() => {
-      // 定位特定元素并移除其背景色
+      // 一次性获取所有需要修改的元素
+      const toolbars = document.querySelectorAll('.mdxeditor .toolbar, .mdxeditor [role="toolbar"]');
       const specificElements = document.querySelectorAll('.mdxeditor div[style*="margin-left:auto"][style*="position:sticky"][style*="right:0"]');
-      specificElements.forEach(element => {
-        if (element instanceof HTMLElement) {
-          element.style.backgroundColor = 'transparent';
-          // 确保模式选择器在滚动时保持在右侧
-          element.style.zIndex = '11';
-        }
-      });
-
-      // 其他下拉菜单
       const dropdowns = document.querySelectorAll('.mdxeditor [data-view-mode-selector], .mdxeditor [role="listbox"], .mdxeditor [role="menu"]');
-      dropdowns.forEach(dropdown => {
-        if (dropdown instanceof HTMLElement) {
-          dropdown.style.backgroundColor = 'transparent';
-        }
-      });
-
-      // 确保弹出菜单和对话框正确显示
       const popups = document.querySelectorAll('.mdxeditor [data-radix-popper-content-wrapper], .mdxeditor .popup-container');
-      popups.forEach(popup => {
-        if (popup instanceof HTMLElement) {
-          popup.style.zIndex = '20';
-        }
+
+      // 使用requestAnimationFrame来优化渲染性能
+      requestAnimationFrame(() => {
+        // 批量修改样式，减少重绘
+        toolbars.forEach(toolbar => {
+          if (toolbar instanceof HTMLElement) {
+            Object.assign(toolbar.style, {
+              backgroundColor: 'transparent',
+              borderBottom: '1px solid var(--border-color)',
+              position: 'sticky',
+              top: '0',
+              zIndex: '10',
+              width: '100%'
+            });
+          }
+        });
+
+        specificElements.forEach(element => {
+          if (element instanceof HTMLElement) {
+            element.style.backgroundColor = 'transparent';
+            element.style.zIndex = '11';
+          }
+        });
+
+        dropdowns.forEach(dropdown => {
+          if (dropdown instanceof HTMLElement) {
+            dropdown.style.backgroundColor = 'transparent';
+          }
+        });
+
+        popups.forEach(popup => {
+          if (popup instanceof HTMLElement) {
+            popup.style.zIndex = '20';
+          }
+        });
       });
-    }, 500);
+    };
+
+    // 延迟执行，确保DOM已加载
+    const timeoutId = setTimeout(applyStyles, 300);
+    
+    // 清理函数
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   // Open the image upload dialog directly
@@ -187,7 +228,7 @@ export default function MarkdownEditor({
       <MDXEditor
         ref={editorRef}
         markdown={value || ""}
-        onChange={onChange}
+        onChange={debouncedOnChange}
         className="mdx-editor-custom md-list-fix"
         plugins={[
           headingsPlugin(),
@@ -233,7 +274,11 @@ export default function MarkdownEditor({
               text: '文本'
             } 
           }),
-          diffSourcePlugin({ viewMode: 'rich-text' }),
+          diffSourcePlugin({ 
+            viewMode: 'rich-text',
+            // 性能优化：减少不必要的diff计算
+            diffMarkdown: value || "" 
+          }),
           markdownShortcutPlugin(),
           directivesPlugin(), // 添加指令插件以支持更多格式
           toolbarPlugin({
