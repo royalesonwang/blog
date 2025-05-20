@@ -25,7 +25,6 @@
 /* 编辑区域样式 */
 .mdxeditor [data-lexical-editor] {
   background-color: transparent;
-  padding: 1rem;
   overflow-y: auto !important;
   max-height: calc(100vh - 200px) !important;
   scrollbar-width: thin;
@@ -36,6 +35,11 @@
   will-change: contents;
   contain: content;
   backface-visibility: hidden;
+}
+
+/* 只对编辑器输入区域应用内边距 */
+.mdxeditor .editor-container {
+  padding: 1rem;
 }
 
 /* 修复Mac上的输入滞后问题 */
@@ -207,8 +211,8 @@
 /* 聚焦状态 - 匹配 Shadcn UI 输入框的聚焦样式 */
 .mdxeditor:focus-within {
   outline: none;
-  ring: 2px solid hsl(var(--ring));
-  ring-offset: 2px;
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
 }
 
 /* 工具栏按钮悬停效果 */
