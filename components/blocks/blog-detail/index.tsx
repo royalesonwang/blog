@@ -369,11 +369,10 @@ export default function BlogDetail({ post }: { post: Post }) {
               </div>
             )}
           </div>
-        </div>
-        <div className="my-2 mb-4 border-t border-border"></div>
+        </div>        <div className="my-2 mb-4 border-t border-border"></div>
         
         {/* 文章内容区域：左侧目录，右侧内容 */}
-        <div className="flex" ref={contentRef}>
+        <div className="lg:flex" ref={contentRef}>
           {/* 左侧目录导航 */}
           <div 
             className="hidden lg:block lg:w-64 lg:flex-none" 
