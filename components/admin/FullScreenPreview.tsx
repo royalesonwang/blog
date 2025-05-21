@@ -6,18 +6,28 @@ import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface FullScreenPreviewProps {
-  src: string;
+  src?: string;
+  imageUrl?: string; // 兼容接口
   alt?: string;
   onClose: () => void;
+  open?: boolean; // 兼容接口
 }
 
-export default function FullScreenPreview({ src, alt, onClose }: FullScreenPreviewProps) {
+export default function FullScreenPreview({ src, imageUrl, alt, onClose, open = true }: FullScreenPreviewProps) {
   const [loading, setLoading] = useState(true);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(open);
   const imgRef = useRef<HTMLImageElement>(null);
+  
+  // 实际使用的图片URL
+  const imageSource = src || imageUrl || "";
+
+  // 监听open属性变化
+  useEffect(() => {
+    setIsVisible(open);
+  }, [open]);
 
   // 处理ESC键关闭预览
   useEffect(() => {
@@ -32,6 +42,8 @@ export default function FullScreenPreview({ src, alt, onClose }: FullScreenPrevi
 
   // 防止滚动并修复宽度问题
   useEffect(() => {
+    if (!isVisible) return;
+    
     // 保存原始样式
     const originalOverflow = document.body.style.overflow;
     const originalPaddingRight = document.body.style.paddingRight;
@@ -52,7 +64,7 @@ export default function FullScreenPreview({ src, alt, onClose }: FullScreenPrevi
       document.body.style.paddingRight = originalPaddingRight;
       document.body.style.width = originalWidth;
     };
-  }, []);
+  }, [isVisible]);
 
   // 获取图片原始尺寸
   const handleImageLoad = () => {
@@ -178,8 +190,7 @@ export default function FullScreenPreview({ src, alt, onClose }: FullScreenPrevi
               >
                 <div className="w-10 h-10 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
               </motion.div>
-            )}
-            
+            )}            
             {/* 图片容器 */}
             <motion.div 
               className="flex items-center justify-center w-full h-full overflow-hidden"
@@ -190,7 +201,7 @@ export default function FullScreenPreview({ src, alt, onClose }: FullScreenPrevi
             >
               <img
                 ref={imgRef}
-                src={src}
+                src={imageSource}
                 alt={alt || "图片预览"}
                 className="object-contain max-h-full max-w-full"
                 style={getImageStyle()}

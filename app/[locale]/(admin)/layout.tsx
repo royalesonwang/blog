@@ -75,6 +75,21 @@ export default async function AdminLayout({
             },
           ],
         },
+        {
+          title: "Albums",
+          icon: "RiGalleryLine",
+          is_expand: true,
+          children: [
+            {
+              title: "Album List",
+              url: "/admin/albums",
+            },
+            {
+              title: "Add Album",
+              url: "/admin/albums/add",
+            },
+          ],
+        },
       ],
     },
     social: {

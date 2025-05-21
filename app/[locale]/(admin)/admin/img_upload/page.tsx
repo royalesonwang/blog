@@ -1,84 +1,66 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState } from "react";
+import { CloudIcon, Info, CheckCircle2, Copy, ImageIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CloudIcon, CheckCircle2, FileImage, Copy, Info } from "lucide-react";
+import MultiImageUploader from "@/components/image/MultiImageUploader";
 export const runtime = 'edge';
 
-export default function ImageUploadPage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+export default function ImageUploadPage() {  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
-  const [altText, setAltText] = useState("");
-  const [tags, setTags] = useState("");
-  const [selectedFolder, setSelectedFolder] = useState("default");
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setUploadedUrl(null);
-      setFileName(null);
-    }
+  const [altText, setAltText] = useState<string>("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [hasFileSelected, setHasFileSelected] = useState<boolean>(false);
+  const [uploadedImages, setUploadedImages] = useState<Array<{
+    id: string;
+    url: string;
+    thumbnailUrl: string | null;
+    fileName: string | null;
+    originalName: string;
+    size: number;
+    width: number;
+    height: number;
+  }>>([]);
+    const handleImageUploaded = (
+    imageUrl: string, 
+    thumbUrl: string | null, 
+    alt: string, 
+    fileNamePath: string | null
+  ) => {
+    setUploadedUrl(imageUrl);
+    setThumbnailUrl(thumbUrl);
+    setFileName(fileNamePath);
+    setAltText(alt);
   };
-
-  const handleUpload = async () => {
-    if (!file) {
-      toast.error("Please select a file to upload");
-      return;
-    }
-
-    setUploading(true);
+  
+  const handleImagesUploaded = (images: Array<{
+    id: string;
+    url: string;
+    thumbnailUrl: string | null;
+    fileName: string | null;
+    originalName: string;
+    size: number;
+    width: number;
+    height: number;
+  }>) => {
+    setUploadedImages(images);
     
-    try {
-      // Create form data
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("description", description);
-      formData.append("altText", altText);
-      formData.append("tags", tags);
-      formData.append("folderName", selectedFolder);
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setUploadedUrl(data.url);
-        setThumbnailUrl(data.thumbnailUrl);
-        setFileName(data.fileName);
-        toast.success("Image uploaded successfully to Cloudflare R2");
-        
-        // 记录缩略图和尺寸信息
-        console.log("Upload successful with details:", {
-          original: data.url,
-          thumbnail: data.thumbnailUrl,
-          width: data.width,
-          height: data.height
-        });
-      } else {
-        throw new Error(data.message || "Failed to upload image");
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error("Failed to upload image to Cloudflare R2");
-    } finally {
-      setUploading(false);
+    // 使用第一张图片作为当前选中图片
+    if (images.length > 0) {
+      setUploadedUrl(images[0].url);
+      setThumbnailUrl(images[0].thumbnailUrl);
+      setFileName(images[0].fileName);
+      setAltText("");
     }
   };
-
   return (
-    <div className="container py-10">
+    <div className="container max-w-7xl py-10">
       <div className="flex items-center gap-3 mb-8">
         <CloudIcon className="h-8 w-8 text-blue-500" />
         <h1 className="text-3xl font-bold">Cloudflare R2 Image Upload</h1>
@@ -91,173 +73,184 @@ export default function ImageUploadPage() {
           Images are uploaded to Cloudflare R2 storage. Large images (over 1440px) will be automatically 
           resized to optimize storage and loading speed. Additionally, a thumbnail (max 640px) will be 
           generated for each image.
-        </AlertDescription>
-      </Alert>
+        </AlertDescription>      </Alert>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
             <CardTitle>Upload New Image</CardTitle>
             <CardDescription>
               Select an image file to upload to Cloudflare R2.
             </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="picture">Picture</Label>
-                <Input
-                  id="picture"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </div>
-              {file && (
-                <div className="mt-4">
-                  <h3 className="font-medium mb-2">Selected file:</h3>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <FileImage className="h-4 w-4" />
-                    {file.name} ({Math.round(file.size / 1024)} KB)
-                  </div>
-                </div>
-              )}
-              
-              <div className="grid gap-2">
-                <Label htmlFor="folder">Folder</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="folder"
-                    value={selectedFolder}
-                    onChange={(e) => setSelectedFolder(e.target.value)}
-                    placeholder="Enter folder name..."
-                    autoComplete="off"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Enter a folder name to organize your images. Leave as "default" if not needed.
-                </p>
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Enter image description..."
-                  autoComplete="off"
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="altText">Alt Text</Label>
-                <Input
-                  id="altText"
-                  value={altText}
-                  onChange={(e) => setAltText(e.target.value)}
-                  placeholder="Alternative text for accessibility..."
-                  autoComplete="off"
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="tags">Tags</Label>
-                <Input
-                  id="tags"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="Comma-separated tags..."
-                  autoComplete="off"
-                />
-                <p className="text-xs text-muted-foreground">Separate tags with commas (e.g., nature, landscape, sky)</p>
-              </div>
-            </div>
+          </CardHeader>          <CardContent>
+            <MultiImageUploader 
+              defaultFolder="default"
+              onImageUploaded={handleImageUploaded}
+              onImagesUploaded={handleImagesUploaded}
+              showPreview={false}
+              previewHeight="h-64"
+              onPreviewChange={(url) => setPreviewUrl(url)}
+              onFileSelected={(hasFile) => setHasFileSelected(hasFile)}
+              multiple={true}
+              maxFiles={10}
+            />
           </CardContent>
-          <CardFooter>
-            <Button 
-              onClick={handleUpload} 
-              disabled={!file || uploading}
-              className="w-full"
-            >
-              {uploading ? "Uploading to R2..." : "Upload to Cloudflare R2"}
-            </Button>
-          </CardFooter>
         </Card>
         
         <Card>
           <CardHeader>
-            <CardTitle>Image Preview</CardTitle>
+            <CardTitle>Upload Details</CardTitle>
             <CardDescription>
-              Preview of the uploaded image will appear here.
+              Information about the uploaded image.
             </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center h-64 bg-muted rounded-md">
-              {file ? (
-                <img
-                  src={thumbnailUrl || uploadedUrl || URL.createObjectURL(file)}
-                  alt="Preview"
-                  className="max-h-full max-w-full object-contain"
-                />
-              ) : (
-                <p className="text-muted-foreground">No image selected</p>
-              )}
-            </div>
-            
-            {uploadedUrl && (
-              <div className="mt-6 space-y-4">
+          </CardHeader>          <CardContent>
+            {uploadedUrl && uploadedImages.length === 0 && (              <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  <h3 className="font-medium">Upload successful!</h3>
+                  <h3 className="font-medium">上传成功!</h3>
                 </div>
                 
                 <div>
-                  <Label>File Path:</Label>
+                  <Label>文件路径:</Label>
                   <div className="mt-1 text-sm text-muted-foreground">{fileName}</div>
                 </div>
                 
-                <div>
-                  <Label>R2 Public URL (Original):</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input value={uploadedUrl} readOnly />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                  <div>
                     <Button 
-                      variant="outline" 
-                      size="icon"
+                      variant="default"
+                      className="w-full" 
                       onClick={() => {
                         navigator.clipboard.writeText(uploadedUrl);
-                        toast.success("URL copied to clipboard");
+                        toast.success("原图URL已复制到剪贴板");
                       }}
                     >
-                      <Copy className="h-4 w-4" />
+                      <Copy className="h-4 w-4 mr-2" />
+                      复制原图URL
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Original image (max 1440px if resized)
-                  </p>
+                  
+                  {thumbnailUrl && (
+                    <div>
+                      <Button 
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          navigator.clipboard.writeText(thumbnailUrl);
+                          toast.success("缩略图URL已复制到剪贴板");
+                        }}
+                      >
+                        <Copy className="h-4 w-4 mr-2" />
+                        复制缩略图URL
+                      </Button>
+                    </div>
+                  )}
+                </div>                {thumbnailUrl && (
+                  <div>
+                    <Button 
+                      variant="outline"
+                      className="w-full mt-3"
+                      onClick={() => {
+                        navigator.clipboard.writeText(thumbnailUrl);
+                        toast.success("缩略图URL已复制到剪贴板");
+                      }}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      复制缩略图URL
+                    </Button>
+                  </div>
+                )}
+              </div>            )}
+              {!uploadedUrl && uploadedImages.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="max-h-full max-w-full object-contain"
+                  />
+                ) : (
+                  <>
+                    <p className="text-muted-foreground mb-2">未选择图片</p>
+                    <p className="text-xs text-muted-foreground">上传图片查看详情</p>
+                  </>
+                )}
+              </div>
+            )}
+            
+            {uploadedImages.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <h3 className="font-medium">上传成功！共 {uploadedImages.length} 张图片</h3>
                 </div>
                 
-                <div>
-                  <Label>Thumbnail URL:</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input value={thumbnailUrl || ''} readOnly />
-                    <Button 
-                      variant="outline" 
-                      size="icon"
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+                  {uploadedImages.map((image, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      className={`h-auto p-2 justify-start ${uploadedUrl === image.url ? 'ring-2 ring-primary' : ''}`}
                       onClick={() => {
-                        if (thumbnailUrl) {
-                          navigator.clipboard.writeText(thumbnailUrl);
-                          toast.success("Thumbnail URL copied to clipboard");
-                        }
+                        setUploadedUrl(image.url);
+                        setThumbnailUrl(image.thumbnailUrl);
+                        setFileName(image.fileName);
                       }}
                     >
-                      <Copy className="h-4 w-4" />
+                      <div className="flex items-center gap-2 w-full overflow-hidden">
+                        <img 
+                          src={image.thumbnailUrl || image.url} 
+                          alt={`图片 ${index + 1}`}
+                          className="w-10 h-10 object-cover rounded"
+                        />
+                        <span className="text-xs truncate">{image.originalName}</span>
+                      </div>
                     </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Thumbnail is optimized for web display (max 640x640px)
-                  </p>
+                  ))}
                 </div>
+                
+                {uploadedUrl && (
+                  <div className="mt-4 border-t pt-4">
+                    <h4 className="text-sm font-medium mb-2">选中的图片</h4>
+                    
+                    {fileName && (
+                      <div>
+                        <Label>文件路径:</Label>
+                        <div className="mt-1 text-sm text-muted-foreground">{fileName}</div>
+                      </div>
+                    )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                      <div>
+                        <Button 
+                          variant="default"
+                          className="w-full" 
+                          onClick={() => {
+                            navigator.clipboard.writeText(uploadedUrl);
+                            toast.success("原图URL已复制到剪贴板");
+                          }}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          复制原图URL
+                        </Button>
+                      </div>
+                      
+                      {thumbnailUrl && (
+                        <div>
+                          <Button 
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              navigator.clipboard.writeText(thumbnailUrl);
+                              toast.success("缩略图URL已复制到剪贴板");
+                            }}
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            复制缩略图URL
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>                )}
               </div>
             )}
           </CardContent>
@@ -265,4 +258,4 @@ export default function ImageUploadPage() {
       </div>
     </div>
   );
-} 
+}

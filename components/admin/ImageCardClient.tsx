@@ -209,10 +209,6 @@ export default function ImageCardClient({ image, onDelete, onUpdate, folders = [
             </div>
             
             <div className="flex items-center gap-2 mt-auto">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={currentImage.user?.avatar_url} />
-                <AvatarFallback>{currentImage.user?.nickname?.charAt(0) || 'U'}</AvatarFallback>
-              </Avatar>
               <div className="text-xs text-muted-foreground">
                 {formatDistance(new Date(currentImage.created_at), new Date(), { addSuffix: true })}
               </div>

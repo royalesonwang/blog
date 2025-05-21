@@ -4,7 +4,6 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSupabaseClient } from "@/models/db";
 import { auth } from "@/auth";
 import sharp from "sharp";
- 
 
 // Initialize S3 client for Cloudflare R2
 const S3 = new S3Client({
@@ -35,14 +34,14 @@ export async function POST(request: NextRequest) {
         { success: false, message: "Authentication required" },
         { status: 401 }
       );
-    }
-
-    const formData = await request.formData();
+    }    const formData = await request.formData();
     const file = formData.get("file") as File;
     const description = formData.get("description") as string || "";
     const altText = formData.get("altText") as string || "";
     const tags = formData.get("tags") as string || "";
     const folderName = formData.get("folderName") as string || "default";
+    const targetTable = formData.get("targetTable") as string || "image_uploads"; // 默认上传到image_uploads表
+    const albumId = formData.get("albumId") as string || null; // 如果上传到相册，指定相册ID
     
     if (!file) {
       return NextResponse.json(
@@ -198,8 +197,7 @@ export async function POST(request: NextRequest) {
           finalWidth = Math.round(1440 * aspectRatio);
         }
       }
-      
-      // 准备插入数据
+        // 准备插入数据
       const insertData = {
         file_name: fileName,
         original_file_name: file.name,
@@ -217,13 +215,15 @@ export async function POST(request: NextRequest) {
         storage_provider: 'cloudflare_r2',
         bucket_name: BUCKET_NAME,
         is_public: true,
-        uploaded_by: userUuid
+        uploaded_by: userUuid,
+        ...(targetTable === "album_image" && albumId ? { group_id: albumId } : {}) // 如果上传到相册，添加group_id字段
       };
       
-      console.log("Inserting to database:", insertData);
+      console.log(`Inserting to ${targetTable} table:`, insertData);
       
+      // 根据targetTable参数决定存入哪个表
       const { data, error } = await supabase
-        .from('image_uploads')
+        .from(targetTable)
         .insert(insertData)
         .select('id')
         .single();
