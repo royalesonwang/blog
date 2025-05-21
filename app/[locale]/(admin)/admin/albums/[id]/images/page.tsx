@@ -149,12 +149,11 @@ export default function AlbumImagesPage() {
       }
     }
   };
-  
-  // 处理图片更新
-  const handleImageUpdate = (updatedImage: AlbumImage) => {
+    // 处理图片更新
+  const handleImageUpdate = (updatedImage: any) => {
     setImages(prevImages => 
       prevImages.map(img => 
-        img.id === updatedImage.id ? { ...updatedImage } : img
+        img.id === updatedImage.id ? { ...img, ...updatedImage } : img
       )
     );
   };
@@ -287,12 +286,27 @@ export default function AlbumImagesPage() {
               </Button>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        ) : (          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {images.map((image) => (
               <ImageCardClient 
                 key={image.id} 
-                image={image as any}
+                image={{
+                  id: image.id,
+                  file_name: image.file_name,
+                  original_file_name: image.original_file_name,
+                  public_url: image.public_url,
+                  thumbnail_url: image.thumbnail_url,
+                  file_size: image.file_size,
+                  mime_type: image.mime_type,
+                  description: image.description || '',
+                  alt_text: image.alt_text || '',
+                  tags: image.tags || [],
+                  folder_name: image.folder_name,
+                  created_at: image.created_at,
+                  updated_at: image.updated_at,
+                  uploaded_by: image.uploaded_by || '',
+                  user: image.user || { nickname: 'User', avatar_url: '' }
+                }}
                 onDelete={handleDelete}
                 onUpdate={handleImageUpdate}
               />

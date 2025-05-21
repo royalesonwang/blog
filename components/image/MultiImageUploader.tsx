@@ -6,7 +6,8 @@ import { FileImage, CheckCircle2, Copy, X, ImageIcon, UploadIcon } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ProgressCircle } from "@/components/ui/progress";
+// 从本地导入 ProgressCircle 组件
+import { ProgressCircle } from "./ProgressCircle";
 import { cn } from "@/lib/utils";
 
 interface UploadedImage {
@@ -542,17 +543,18 @@ export default function ImageUploader({
                           </div>
                         </div>
                         
-                        {image.thumbnailUrl && (
-                          <div>
+                        {image.thumbnailUrl && (                          <div>
                             <Label>缩略图 URL:</Label>
                             <div className="flex gap-2 mt-1">
-                              <Input value={image.thumbnailUrl} readOnly className="text-xs" />
+                              <Input value={image.thumbnailUrl || ""} readOnly className="text-xs" />
                               <Button 
                                 variant="outline" 
                                 size="icon"
                                 onClick={() => {
-                                  navigator.clipboard.writeText(image.thumbnailUrl);
-                                  toast.success("缩略图URL已复制到剪贴板");
+                                  if (image.thumbnailUrl) {
+                                    navigator.clipboard.writeText(image.thumbnailUrl);
+                                    toast.success("缩略图URL已复制到剪贴板");
+                                  }
                                 }}
                               >
                                 <Copy className="h-4 w-4" />
