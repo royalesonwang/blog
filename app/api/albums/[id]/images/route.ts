@@ -2,14 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseClient } from "@/models/db";
 import { getUserInfo } from "@/services/user";
 
-interface Props {
-  params: {
-    id: string;
-  };
-}
-
 // 获取相册中的图片
-export async function GET(request: NextRequest, { params }: Props) {
+export async function GET(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
     // 获取当前用户，验证权限
     const user = await getUserInfo();
@@ -17,7 +14,7 @@ export async function GET(request: NextRequest, { params }: Props) {
       return NextResponse.json({ message: "未授权访问" }, { status: 401 });
     }
     
-    const { id } = params;
+    const { id } = context.params;
     
     if (!id || isNaN(Number(id))) {
       return NextResponse.json({ message: "无效的相册ID" }, { status: 400 });
@@ -37,16 +34,18 @@ export async function GET(request: NextRequest, { params }: Props) {
       console.error("Error fetching album images:", error);
       return NextResponse.json({ message: error.message }, { status: 500 });
     }
-    
-    return NextResponse.json({ images: images || [] });
+      return NextResponse.json({ images: images || [] });
   } catch (error) {
-    console.error(`Error in GET /api/albums/${params.id}/images:`, error);
+    console.error(`Error in GET /api/albums/${context.params.id}/images:`, error);
     return NextResponse.json({ message: "服务器错误" }, { status: 500 });
   }
 }
 
 // 添加图片到相册
-export async function POST(request: NextRequest, { params }: Props) {
+export async function POST(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
     // 获取当前用户，验证权限
     const user = await getUserInfo();
@@ -54,7 +53,7 @@ export async function POST(request: NextRequest, { params }: Props) {
       return NextResponse.json({ message: "未授权访问" }, { status: 401 });
     }
     
-    const { id } = params;
+    const { id } = context.params;
     
     if (!id || isNaN(Number(id))) {
       return NextResponse.json({ message: "无效的相册ID" }, { status: 400 });
@@ -151,14 +150,13 @@ export async function POST(request: NextRequest, { params }: Props) {
         console.error("Error inserting image to album_image:", insertError);
         return NextResponse.json({ message: insertError.message }, { status: 500 });
       }
-      
-      return NextResponse.json({ 
+        return NextResponse.json({ 
         message: "图片添加到相册成功", 
         image: newAlbumImage 
       });
     }
   } catch (error) {
-    console.error(`Error in POST /api/albums/${params.id}/images:`, error);
+    console.error(`Error in POST /api/albums/${context.params.id}/images:`, error);
     return NextResponse.json({ message: "服务器错误" }, { status: 500 });
   }
 }

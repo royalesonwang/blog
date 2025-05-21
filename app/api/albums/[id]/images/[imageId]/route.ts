@@ -5,7 +5,7 @@ import { getUserInfo } from "@/services/user";
 // 从相册中移除图片
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; imageId: string } }
+  context: { params: { id: string; imageId: string } }
 ) {
   try {
     // 获取当前用户，验证权限
@@ -14,7 +14,7 @@ export async function DELETE(
       return NextResponse.json({ message: "未授权访问" }, { status: 401 });
     }
     
-    const { id, imageId } = params;
+    const { id, imageId } = context.params;
     
     if (!id || isNaN(Number(id)) || !imageId || isNaN(Number(imageId))) {
       return NextResponse.json({ message: "无效的相册ID或图片ID" }, { status: 400 });
@@ -33,11 +33,10 @@ export async function DELETE(
     if (error) {
       console.error("Error removing image from album:", error);
       return NextResponse.json({ message: error.message }, { status: 500 });
-    }
-    
+    }    
     return NextResponse.json({ message: "图片从相册中移除成功" });
   } catch (error) {
-    console.error(`Error in DELETE /api/albums/${params.id}/images/${params.imageId}:`, error);
+    console.error(`Error in DELETE /api/albums/${context.params.id}/images/${context.params.imageId}:`, error);
     return NextResponse.json({ message: "服务器错误" }, { status: 500 });
   }
 }
