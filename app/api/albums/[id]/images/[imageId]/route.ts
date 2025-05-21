@@ -2,15 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseClient } from "@/models/db";
 import { getUserInfo } from "@/services/user";
 
-interface Props {
-  params: {
-    id: string;
-    imageId: string;
-  };
-}
-
 // 从相册中移除图片
-export async function DELETE(request: NextRequest, { params }: Props) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string; imageId: string } }
+) {
   try {
     // 获取当前用户，验证权限
     const user = await getUserInfo();
