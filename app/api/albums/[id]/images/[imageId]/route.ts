@@ -3,21 +3,26 @@ import { getSupabaseClient } from "@/models/db";
 import { getUserInfo } from "@/services/user";
 
 // 从相册中移除图片
-export async function DELETE(
-  request: NextRequest,
-  context: { params: { id: string; imageId: string } }
-) {
-  try {
+export async function DELETE(request: NextRequest) {  try {
     // 获取当前用户，验证权限
     const user = await getUserInfo();
     if (!user) {
-      return NextResponse.json({ message: "未授权访问" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "未授权访问" },
+        { status: 401 }
+      );
     }
     
-    const { id, imageId } = context.params;
-    
-    if (!id || isNaN(Number(id)) || !imageId || isNaN(Number(imageId))) {
-      return NextResponse.json({ message: "无效的相册ID或图片ID" }, { status: 400 });
+    // 从 URL 中提取参数
+    const url = request.nextUrl;
+    const pathSegments = url.pathname.split('/');
+    const id = pathSegments[pathSegments.length - 3]; // albums/[id]/images/[imageId]
+    const imageId = pathSegments[pathSegments.length - 1]; // 最后一段是 imageId
+      if (!id || isNaN(Number(id)) || !imageId || isNaN(Number(imageId))) {
+      return NextResponse.json(
+        { success: false, message: "无效的相册ID或图片ID" },
+        { status: 400 }
+      );
     }
     
     // 获取Supabase客户端
@@ -32,11 +37,22 @@ export async function DELETE(
     
     if (error) {
       console.error("Error removing image from album:", error);
-      return NextResponse.json({ message: error.message }, { status: 500 });
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 500 }
+      );
     }    
-    return NextResponse.json({ message: "图片从相册中移除成功" });
-  } catch (error) {
-    console.error(`Error in DELETE /api/albums/${context.params.id}/images/${context.params.imageId}:`, error);
-    return NextResponse.json({ message: "服务器错误" }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      message: "图片从相册中移除成功"
+    });  } catch (error) {
+    console.error(`Error in DELETE /api/albums/images:`, error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: `服务器错误: ${error instanceof Error ? error.message : "未知错误"}` 
+      },
+      { status: 500 }
+    );
   }
 }

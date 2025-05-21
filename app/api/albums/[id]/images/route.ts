@@ -3,24 +3,29 @@ import { getSupabaseClient } from "@/models/db";
 import { getUserInfo } from "@/services/user";
 
 // 获取相册中的图片
-export async function GET(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
     // 获取当前用户，验证权限
     const user = await getUserInfo();
     if (!user) {
-      return NextResponse.json({ message: "未授权访问" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "未授权访问" },
+        { status: 401 }
+      );
     }
     
-    const { id } = context.params;
+    // 从 URL 中提取参数
+    const url = request.nextUrl;
+    const pathSegments = url.pathname.split('/');
+    const id = pathSegments[pathSegments.length - 2]; // albums/[id]/images
     
     if (!id || isNaN(Number(id))) {
-      return NextResponse.json({ message: "无效的相册ID" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "无效的相册ID" },
+        { status: 400 }
+      );
     }
-    
-    // 获取Supabase客户端
+      // 获取Supabase客户端
     const supabase = getSupabaseClient();
     
     // 查询相册中的图片
@@ -32,31 +37,48 @@ export async function GET(
     
     if (error) {
       console.error("Error fetching album images:", error);
-      return NextResponse.json({ message: error.message }, { status: 500 });
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 500 }
+      );
     }
-      return NextResponse.json({ images: images || [] });
-  } catch (error) {
-    console.error(`Error in GET /api/albums/${context.params.id}/images:`, error);
-    return NextResponse.json({ message: "服务器错误" }, { status: 500 });
+    
+    return NextResponse.json({
+      success: true,
+      images: images || []
+    });  } catch (error) {
+    console.error(`Error in GET /api/albums/images:`, error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: `服务器错误: ${error instanceof Error ? error.message : "未知错误"}` 
+      },
+      { status: 500 }
+    );
   }
 }
 
 // 添加图片到相册
-export async function POST(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
     // 获取当前用户，验证权限
     const user = await getUserInfo();
     if (!user) {
-      return NextResponse.json({ message: "未授权访问" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "未授权访问" },
+        { status: 401 }
+      );
     }
     
-    const { id } = context.params;
-    
-    if (!id || isNaN(Number(id))) {
-      return NextResponse.json({ message: "无效的相册ID" }, { status: 400 });
+    // 从 URL 中提取参数
+    const url = request.nextUrl;
+    const pathSegments = url.pathname.split('/');
+    const id = pathSegments[pathSegments.length - 2]; // albums/[id]/images
+      if (!id || isNaN(Number(id))) {
+      return NextResponse.json(
+        { success: false, message: "无效的相册ID" },
+        { status: 400 }
+      );
     }
     
     // 获取请求数据
@@ -64,7 +86,10 @@ export async function POST(
     
     // 检查必要字段
     if (!data.image_id) {
-      return NextResponse.json({ message: "缺少图片ID" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "缺少图片ID" },
+        { status: 400 }
+      );
     }
       // 获取Supabase客户端
     const supabase = getSupabaseClient();
@@ -75,10 +100,12 @@ export async function POST(
       .select("*")
       .eq("id", data.image_id)
       .single();
-    
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116: not_found
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116: not_found
       console.error("Error checking image:", checkError);
-      return NextResponse.json({ message: checkError.message }, { status: 500 });
+      return NextResponse.json(
+        { success: false, message: checkError.message },
+        { status: 500 }
+      );
     }
     
     if (existingImage) {
@@ -89,13 +116,16 @@ export async function POST(
         .eq("id", data.image_id)
         .select()
         .single();
-      
-      if (error) {
+        if (error) {
         console.error("Error adding image to album:", error);
-        return NextResponse.json({ message: error.message }, { status: 500 });
+        return NextResponse.json(
+          { success: false, message: error.message },
+          { status: 500 }
+        );
       }
       
       return NextResponse.json({ 
+        success: true,
         message: "图片添加到相册成功", 
         image: updatedImage 
       });
@@ -106,14 +136,19 @@ export async function POST(
         .select("*")
         .eq("id", data.image_id)
         .single();
-      
-      if (sourceError) {
+        if (sourceError) {
         console.error("Error fetching source image:", sourceError);
-        return NextResponse.json({ message: sourceError.message }, { status: 500 });
+        return NextResponse.json(
+          { success: false, message: sourceError.message },
+          { status: 500 }
+        );
       }
       
       if (!sourceImage) {
-        return NextResponse.json({ message: "源图片不存在" }, { status: 404 });
+        return NextResponse.json(
+          { success: false, message: "源图片不存在" },
+          { status: 404 }
+        );
       }
       
       // 准备要插入album_image表的数据
@@ -145,18 +180,27 @@ export async function POST(
         .insert(albumImageData)
         .select()
         .single();
-      
-      if (insertError) {
+        if (insertError) {
         console.error("Error inserting image to album_image:", insertError);
-        return NextResponse.json({ message: insertError.message }, { status: 500 });
+        return NextResponse.json(
+          { success: false, message: insertError.message },
+          { status: 500 }
+        );
       }
-        return NextResponse.json({ 
+      
+      return NextResponse.json({ 
+        success: true,
         message: "图片添加到相册成功", 
         image: newAlbumImage 
       });
-    }
-  } catch (error) {
-    console.error(`Error in POST /api/albums/${context.params.id}/images:`, error);
-    return NextResponse.json({ message: "服务器错误" }, { status: 500 });
+    }  } catch (error) {
+    console.error(`Error in POST /api/albums/images:`, error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: `服务器错误: ${error instanceof Error ? error.message : "未知错误"}` 
+      },
+      { status: 500 }
+    );
   }
 }
