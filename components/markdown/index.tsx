@@ -72,14 +72,8 @@ const preprocessMarkdown = (content: string): string => {
     
     // 使用更高效的测试方法
     if (/^\s*(\*{3,}|-{3,}|_{3,})\s*$/.test(line)) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith('*')) {
-        resultLines.push('* * *');
-      } else if (trimmed.startsWith('-')) {
-        resultLines.push('- - -');
-      } else {
-        resultLines.push('_ _ _');
-      }
+      // 直接使用特殊的HTML实体格式表示水平线，避免后续处理影响
+      resultLines.push('\u200B<hr class="markdown-hr" />');
     } 
     else if (/^\s*\*(?!\s)/.test(line) && line.indexOf('*', line.indexOf('*') + 1) > 0) {
       const prefix = line.match(/^\s*/)?.[0] || '';
@@ -97,6 +91,9 @@ const preprocessMarkdown = (content: string): string => {
 // 合并预处理函数以减少字符串操作次数
 const processMarkdownContent = (content: string): string => {
   if (!content) return '';
+  
+  // 先应用预处理函数处理特殊的水平线格式
+  content = preprocessMarkdown(content);
   
   // 应用各种预处理，减少多次字符串转换和分割
   return content
@@ -138,9 +135,17 @@ const createMarkdownIt = () => {
   
   // 为静态ID映射创建属性
   (md as any).__idMap = {};
-  
-  // 自定义水平线规则
+    // 自定义水平线规则
   md.renderer.rules.hr = () => '<hr class="markdown-hr" />';
+  
+  // 允许HTML内容通过预处理器生成的特殊水平线标记
+  md.renderer.rules.html_block = (tokens, idx) => {
+    const content = tokens[idx].content.trim();
+    if (content === '<hr class="markdown-hr" />') {
+      return content;
+    }
+    return tokens[idx].content;
+  };
   
   // 自定义标题渲染
   md.renderer.rules.heading_open = (tokens, idx) => {
@@ -228,7 +233,6 @@ export default function Markdown({ content }: { content: string }) {
 
   // 创建和缓存 MarkdownIt 实例
   const md = useMemo(() => createMarkdownIt(), []);
-
   // 预处理和渲染 Markdown - 使用useCallback提高性能
   const renderMarkdown = useCallback((content: string) => {
     try {
@@ -240,7 +244,7 @@ export default function Markdown({ content }: { content: string }) {
       // 修复 isSpace 未定义的问题
       fixIsSpaceIssue();
       
-      // 简化的预处理步骤，减少字符串操作次数
+      // 应用预处理步骤，已经包含了preprocessMarkdown的调用
       const processedContent = processMarkdownContent(content);
       
       // 渲染Markdown
