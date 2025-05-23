@@ -5,14 +5,7 @@ import { getUserInfo } from "@/services/user";
 // 获取单个相册详情
 export async function GET(request: NextRequest) {
   try {
-    // 获取当前用户，验证权限
-    const user = await getUserInfo();
-    if (!user) {
-      return NextResponse.json({ 
-        success: false, 
-        message: "未授权访问" 
-      }, { status: 401 });
-    }
+    // 相册详情是公开的，无需验证权限
     
     // 从URL中获取相册ID
     const url = request.nextUrl;
