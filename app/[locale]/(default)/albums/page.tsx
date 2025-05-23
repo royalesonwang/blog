@@ -217,15 +217,19 @@ export default function AlbumsPage() {
           <p className="mb-8 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
             A collection of memories captured in images. Browse through our albums and enjoy the visual journey of moments and experiences.
           </p>
-        </div>
-      {albumGroups.map((group, groupIndex) => {
+        </div>      {albumGroups.map((group, groupIndex) => {
         // 确定这组是偶数组还是奇数组
         const isOddGroup = groupIndex % 2 === 0; // 0,2,4...为奇数组（索引从0开始）
-          return (
-          <div key={`group-${groupIndex}`} className="mb-1">
-            {/* 奇数组: 4个正方形(2x2)在左侧，1个长方形在右侧 */}
-            {isOddGroup && (              <div className="grid grid-cols-12 gap-1 w-full overflow-hidden">
-                {/* 左侧4个正方形相册区域 */}                <div className="col-span-12 md:col-span-8 grid grid-cols-2 gap-1 w-full">                  {group.slice(0, Math.min(4, group.length)).map((album, albumIndex) => {
+        const isFiveImages = group.length === 5; // 是否正好有5张图片
+          
+        return (
+          <div key={`group-${groupIndex}`} className="mb-1" style={{ width: "100%" }}>
+            {/* 当有5张图片时保持原有的布局 */}
+            {isFiveImages && isOddGroup && (
+              <div className="grid grid-cols-12 gap-1 w-full overflow-hidden">
+                {/* 左侧4个正方形相册区域 */}
+                <div className="col-span-12 md:col-span-8 grid grid-cols-2 gap-1 w-full">
+                  {group.slice(0, 4).map((album, albumIndex) => {
                     const coverImage = album.coverImage;
                     
                     return (
@@ -239,6 +243,7 @@ export default function AlbumsPage() {
                           src={coverImage.thumbnail_url || coverImage.public_url}
                           alt={coverImage.alt_text || album.title}
                           fill
+                          priority={groupIndex === 0} /* 为第一组的图片添加priority属性，这些是LCP图片 */
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           onError={(e) => {
@@ -253,61 +258,66 @@ export default function AlbumsPage() {
                       </div>
                     );
                   })}
-                </div>                {/* 右侧长方形相册 */}
-                {group.length >= 5 && (
-                  <div className="col-span-12 md:col-span-4 w-full">                    <div 
-                      className="relative overflow-hidden group cursor-pointer aspect-square md:aspect-[4/5] h-full w-full"
-                      style={{ minHeight: "420px" }}
-                      onClick={() => setSelectedAlbum({ id: group[4].id, title: group[4].title })}
-                    >
-                      <Image
-                        src={group[4].coverImage.thumbnail_url || group[4].coverImage.public_url}
-                        alt={group[4].coverImage.alt_text || group[4].title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        onError={(e) => {
-                          console.error(`图片加载失败: ${group[4].coverImage.thumbnail_url || group[4].coverImage.public_url}`);
-                          e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
-                        }}
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
-                        <h3 className="text-base font-medium truncate">{group[4].title}</h3>
-                        <p className="text-sm opacity-80">{group[4].imageCount} 张图片</p>
-                      </div>
+                </div>
+                {/* 右侧长方形相册 */}
+                <div className="col-span-12 md:col-span-4 w-full">
+                  <div 
+                    className="relative overflow-hidden group cursor-pointer aspect-square md:aspect-[4/5] h-full w-full"
+                    style={{ minHeight: "420px" }}
+                    onClick={() => setSelectedAlbum({ id: group[4].id, title: group[4].title })}
+                  >
+                    <Image
+                      src={group[4].coverImage.thumbnail_url || group[4].coverImage.public_url}
+                      alt={group[4].coverImage.alt_text || group[4].title}
+                      fill
+                      priority={groupIndex === 0} /* 为首组的图片添加priority属性 */
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      onError={(e) => {
+                        console.error(`图片加载失败: ${group[4].coverImage.thumbnail_url || group[4].coverImage.public_url}`);
+                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
+                      }}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
+                      <h3 className="text-base font-medium truncate">{group[4].title}</h3>
+                      <p className="text-sm opacity-80">{group[4].imageCount} 张图片</p>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             )}
             
-            {/* 偶数组: 1个长方形在左侧，4个正方形(2x2)在右侧 */}
-            {!isOddGroup && (              <div className="grid grid-cols-12 gap-1 w-full overflow-hidden">                {/* 左侧长方形相册 */}
-                {group.length > 0 && (
-                  <div className="col-span-12 md:col-span-4 w-full">                    <div 
-                      className="relative overflow-hidden group cursor-pointer aspect-square md:aspect-[4/5] h-full w-full"
-                      style={{ minHeight: "420px" }}
-                      onClick={() => setSelectedAlbum({ id: group[0].id, title: group[0].title })}
-                    >
-                      <Image
-                        src={group[0].coverImage.thumbnail_url || group[0].coverImage.public_url}
-                        alt={group[0].coverImage.alt_text || group[0].title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        onError={(e) => {
-                          console.error(`图片加载失败: ${group[0].coverImage.thumbnail_url || group[0].coverImage.public_url}`);
-                          e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
-                        }}
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
-                        <h3 className="text-base font-medium truncate">{group[0].title}</h3>
-                        <p className="text-sm opacity-80">{group[0].imageCount} 张图片</p>
-                      </div>
+            {/* 偶数组且有5张图片: 1个长方形在左侧，4个正方形(2x2)在右侧 */}
+            {isFiveImages && !isOddGroup && (
+              <div className="grid grid-cols-12 gap-1 w-full overflow-hidden">
+                {/* 左侧长方形相册 */}
+                <div className="col-span-12 md:col-span-4 w-full">
+                  <div 
+                    className="relative overflow-hidden group cursor-pointer aspect-square md:aspect-[4/5] h-full w-full"
+                    style={{ minHeight: "420px" }}
+                    onClick={() => setSelectedAlbum({ id: group[0].id, title: group[0].title })}
+                  >
+                    <Image
+                      src={group[0].coverImage.thumbnail_url || group[0].coverImage.public_url}
+                      alt={group[0].coverImage.alt_text || group[0].title}
+                      fill
+                      priority={groupIndex === 0 || groupIndex === 1} /* 为第一组和第二组的大图添加priority属性 */
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      onError={(e) => {
+                        console.error(`图片加载失败: ${group[0].coverImage.thumbnail_url || group[0].coverImage.public_url}`);
+                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
+                      }}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
+                      <h3 className="text-base font-medium truncate">{group[0].title}</h3>
+                      <p className="text-sm opacity-80">{group[0].imageCount} 张图片</p>
                     </div>
                   </div>
-                )}
-                  {/* 右侧4个正方形相册区域 */}                <div className="col-span-12 md:col-span-8 grid grid-cols-2 gap-1 w-full">                  {group.slice(1).map((album, albumIndex) => {
+                </div>
+                {/* 右侧4个正方形相册区域 */}
+                <div className="col-span-12 md:col-span-8 grid grid-cols-2 gap-1 w-full">
+                  {group.slice(1).map((album, albumIndex) => {
                     const coverImage = album.coverImage;
                     
                     return (
@@ -336,6 +346,40 @@ export default function AlbumsPage() {
                     );
                   })}
                 </div>
+              </div>
+            )}
+              {/* 不足5张图片时，不管奇偶，都采用2列排版 */}
+            {!isFiveImages && (
+              <div className="grid grid-cols-12 gap-1 w-full overflow-hidden">
+                {group.map((album, albumIndex) => {
+                  const coverImage = album.coverImage;
+                  
+                  return (
+                    <div 
+                      key={`album-${album.id}`} 
+                      className="col-span-6 relative overflow-hidden group cursor-pointer aspect-square w-full"
+                      style={{ minHeight: "200px" }}
+                      onClick={() => setSelectedAlbum({ id: album.id, title: album.title })}
+                    >
+                      <Image
+                        src={coverImage.thumbnail_url || coverImage.public_url}
+                        alt={coverImage.alt_text || album.title}
+                        fill
+                        priority={groupIndex === 0 && albumIndex < 2} /* 为首组的前两张图片添加priority属性 */
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        onError={(e) => {
+                          console.error(`图片加载失败: ${coverImage.thumbnail_url || coverImage.public_url}`);
+                          e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
+                        }}
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
+                        <h3 className="text-base font-medium truncate">{album.title}</h3>
+                        <p className="text-sm opacity-80">{album.imageCount} 张图片</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -49,6 +49,8 @@ const CustomDialogContent = React.forwardRef<
   </DialogPortal>
 ));
 
+CustomDialogContent.displayName = 'CustomDialogContent';
+
 interface AlbumImage {
   id: number;
   file_name: string;
@@ -499,8 +501,7 @@ export default function AlbumViewerDialog({
         }
       }
     }
-  };
-  // 当鼠标离开内容区域时立即隐藏控制元素
+  };  // 当鼠标离开内容区域时立即隐藏控制元素
   const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     // Top Info Bar logic - 鼠标离开时直接隐藏
     if (infoBarTimerRef.current) {
@@ -509,9 +510,13 @@ export default function AlbumViewerDialog({
     setShowInfoBar(false);
 
     // Thumbnail bar logic - 检查是否移到缩略图或右箭头上
-    const relatedTarget = e.relatedTarget as Node | null;
-    const isMovingToThumbnails = thumbnailsContainerRef.current && relatedTarget && thumbnailsContainerRef.current.contains(relatedTarget);
-    const isMovingToRightArrow = rightArrowRef.current && relatedTarget && rightArrowRef.current.contains(relatedTarget);
+    const relatedTarget = e.relatedTarget;
+    
+    // 检查relatedTarget是否为有效的DOM节点
+    const isValidNode = relatedTarget instanceof Node;
+    
+    const isMovingToThumbnails = isValidNode && thumbnailsContainerRef.current && thumbnailsContainerRef.current.contains(relatedTarget as Node);
+    const isMovingToRightArrow = isValidNode && rightArrowRef.current && rightArrowRef.current.contains(relatedTarget as Node);
 
     // 如果不是移到缩略图或右箭头上，则立即隐藏缩略图
     if (!isMovingToThumbnails && !isMovingToRightArrow) {
@@ -531,9 +536,13 @@ export default function AlbumViewerDialog({
       thumbnailsTimerRef.current = null;
     }
   };  const handleThumbnailsMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    const relatedTarget = e.relatedTarget as Node | null;
-    const isMovingToContentBottom = contentRef.current && relatedTarget && contentRef.current.contains(relatedTarget) && (e.clientY - contentRef.current.getBoundingClientRect().top > contentRef.current.getBoundingClientRect().height * 0.7);
-    const isMovingToRightArrow = rightArrowRef.current && relatedTarget && rightArrowRef.current.contains(relatedTarget);
+    const relatedTarget = e.relatedTarget;
+    
+    // 检查relatedTarget是否为有效的DOM节点
+    const isValidNode = relatedTarget instanceof Node;
+    
+    const isMovingToContentBottom = isValidNode && contentRef.current && contentRef.current.contains(relatedTarget as Node) && (e.clientY - contentRef.current.getBoundingClientRect().top > contentRef.current.getBoundingClientRect().height * 0.7);
+    const isMovingToRightArrow = isValidNode && rightArrowRef.current && rightArrowRef.current.contains(relatedTarget as Node);
 
     if (!isMovingToContentBottom && !isMovingToRightArrow) {
       if (thumbnailsTimerRef.current) {
@@ -614,9 +623,13 @@ export default function AlbumViewerDialog({
                   thumbnailsTimerRef.current = null;
                 }
               }}              onMouseLeave={(e) => {
-                const relatedTarget = e.relatedTarget as Node | null;
-                const isMovingToThumbnails = thumbnailsContainerRef.current && relatedTarget && thumbnailsContainerRef.current.contains(relatedTarget);
-                const isMovingToContentBottom = contentRef.current && relatedTarget && contentRef.current.contains(relatedTarget) && (e.clientY - contentRef.current.getBoundingClientRect().top > contentRef.current.getBoundingClientRect().height * 0.7);
+                const relatedTarget = e.relatedTarget;
+                
+                // 检查relatedTarget是否为有效的DOM节点
+                const isValidNode = relatedTarget instanceof Node;
+                
+                const isMovingToThumbnails = isValidNode && thumbnailsContainerRef.current && thumbnailsContainerRef.current.contains(relatedTarget as Node);
+                const isMovingToContentBottom = isValidNode && contentRef.current && contentRef.current.contains(relatedTarget as Node) && (e.clientY - contentRef.current.getBoundingClientRect().top > contentRef.current.getBoundingClientRect().height * 0.7);
 
                 if (!isMovingToThumbnails && !isMovingToContentBottom) {
                   if (thumbnailsTimerRef.current) {
@@ -639,11 +652,11 @@ export default function AlbumViewerDialog({
         )}
       </>
     );
-  };    return (
-    <Dialog open={open} onOpenChange={onClose} modal={true}>      
+  };    return (    <Dialog open={open} onOpenChange={onClose} modal={true}>      
       <CustomDialogContent className="max-w-6xl max-h-[90vh] md:max-h-[90vh] p-0 overflow-hidden flex flex-col bg-black sm:rounded-lg border-0 outline-none shadow-none" style={{ background: 'black', boxShadow: 'none', border: 'none' }}>
         <DialogTitle className="sr-only">{albumTitle}</DialogTitle>
-        {/* 全屏图片显示区 */}        <div 
+        <DialogDescription className="sr-only">{`${albumTitle} 相册图片浏览器`}</DialogDescription>
+        {/* 全屏图片显示区 */}<div 
           ref={contentRef}          
           className="w-full overflow-hidden relative bg-black/90 flex-grow h-full touch-none select-none"
           style={{ 
@@ -656,17 +669,12 @@ export default function AlbumViewerDialog({
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchEnd}
           onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-        >
-          {loading ? (
-            <div className="flex items-center justify-center h-full min-h-[50vh] md:min-h-[60vh] transition-all duration-300">
-              <div className="w-12 h-12 rounded-full animate-spin"></div>
-            </div>
-          ) : error ? (
+          onMouseLeave={handleMouseLeave}        >
+          {error ? (
             <div className="flex items-center justify-center h-full min-h-[50vh] md:min-h-[60vh] text-red-500">
               {error}
             </div>
-          ) : images.length === 0 ? (
+          ) : images.length === 0 && !loading ? (
             <div className="flex items-center justify-center h-full min-h-[50vh] md:min-h-[60vh] text-white">
               该相册没有图片
             </div>
@@ -675,58 +683,65 @@ export default function AlbumViewerDialog({
               <div 
                 className="relative w-full h-full flex items-center justify-center" 
                 style={{ height: '100%', position: 'absolute', inset: 0 }}
-              >
-                {/* 当前图片 */}                    <div className="absolute inset-0 w-full h-full"> {/* 使用absolute定位并填满整个容器 */}                  <div 
-                      className={`w-full h-full flex items-center justify-center ${scale > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
+              >                {/* 当前图片 */}
+                <div className="absolute inset-0 w-full h-full"> {/* 使用absolute定位并填满整个容器 */}
+                  <div 
+                      className={`relative w-full h-full flex items-center justify-center ${scale > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
                       onClick={handleDoubleClick}
                       style={{ touchAction: scale > 1 ? 'pan-x pan-y' : 'none' }}
                     >
-                    {!imageLoaded && (
-                      <div className="absolute inset-0 flex items-center justify-center z-10">
-                        <div className="w-10 h-10 rounded-full animate-spin"></div>
+                    {/* 显示加载状态：当正在获取相册数据或当前图片未加载完成时 */}
+                    {(loading || !currentImage || !imageLoaded) && (
+                      <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/20">
+                        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                       </div>
-                    )}                    
-                    <Image
-                      src={currentImage?.public_url || ''}
-                      alt={currentImage?.alt_text || currentImage?.original_file_name || '相册图片'}
-                      fill
-                      className={cn(
-                        "object-contain transition-all duration-300",
-                        imageLoaded ? 'opacity-100' : 'opacity-0 blur-sm',
-                        slideDirection === 'none' ? '' : 'scale-[0.98]'
-                      )}                      style={{
-                        transition: `opacity ${BLUR_DURATION}ms ${FADE_EASING}, 
-                                    filter ${BLUR_DURATION}ms ${FADE_EASING}, 
-                                    transform ${isPinching ? '100ms' : TRANSITION_DURATION + 'ms'} ${SLIDE_EASING}`,
-                        willChange: 'opacity, filter, transform',
-                        objectFit: 'contain',
-                        width: '100%',
-                        height: '100%',
-                        transform: `scale(${scale})`, // 应用缩放
-                      }}
-                      sizes="(max-width: 768px) 100vw, 100vw"
-                      priority
-                      onLoad={handleImageLoad}                      onError={(e) => {
-                        // 尝试使用不同的URL格式重试加载
-                        const currentSrc = e.currentTarget.src;
-                        if (!currentSrc.includes('retry=true') && currentImage?.public_url) {
-                          // 尝试添加时间戳或重试标记来绕过缓存
-                          const retryUrl = `${currentImage.public_url}${currentImage.public_url.includes('?') ? '&' : '?'}retry=true&t=${Date.now()}`;
-                          e.currentTarget.src = retryUrl;
-                        } else {
-                          // 如果已经重试过，显示错误图片
-                          e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23191919'/%3E%3Cpath d='M35,45 L65,55 M35,55 L65,45' stroke='%23ffffff' stroke-width='3'/%3E%3Ctext x='50' y='65' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23ffffff'%3E图片加载失败%3C/text%3E%3C/svg%3E";
-                          setImageLoaded(true);
-                        }
-                      }}
-                    />
-                  </div>
-                  {/* 过渡动画图片 */}
+                    )}
+                    
+                    {/* 只有在有图片数据时才渲染Image组件 */}
+                    {currentImage && (
+                      <Image
+                        src={currentImage?.public_url || ''}
+                        alt={currentImage?.alt_text || currentImage?.original_file_name || '相册图片'}
+                        fill
+                        className={cn(
+                          "object-contain transition-all duration-300",
+                          imageLoaded ? 'opacity-100' : 'opacity-0 blur-sm',
+                          slideDirection === 'none' ? '' : 'scale-[0.98]'
+                        )}
+                        style={{
+                          transition: `opacity ${BLUR_DURATION}ms ${FADE_EASING}, 
+                                      filter ${BLUR_DURATION}ms ${FADE_EASING}, 
+                                      transform ${isPinching ? '100ms' : TRANSITION_DURATION + 'ms'} ${SLIDE_EASING}`,
+                          willChange: 'opacity, filter, transform',
+                          objectFit: 'contain',
+                          width: '100%',
+                          height: '100%',
+                          transform: `scale(${scale})`, // 应用缩放
+                        }}
+                        sizes="(max-width: 768px) 100vw, 100vw"
+                        priority
+                        onLoad={handleImageLoad}
+                        onError={(e) => {
+                          // 尝试使用不同的URL格式重试加载
+                          const currentSrc = e.currentTarget.src;
+                          if (!currentSrc.includes('retry=true') && currentImage?.public_url) {
+                            // 尝试添加时间戳或重试标记来绕过缓存
+                            const retryUrl = `${currentImage.public_url}${currentImage.public_url.includes('?') ? '&' : '?'}retry=true&t=${Date.now()}`;
+                            e.currentTarget.src = retryUrl;
+                          } else {
+                            // 如果已经重试过，显示错误图片
+                            e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23191919'/%3E%3Cpath d='M35,45 L65,55 M35,55 L65,45' stroke='%23ffffff' stroke-width='3'/%3E%3Ctext x='50' y='65' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23ffffff'%3E图片加载失败%3C/text%3E%3C/svg%3E";
+                            setImageLoaded(true);
+                          }
+                        }}
+                      />
+                    )}
+                  </div>{/* 过渡动画图片 */}
                   {slideDirection !== 'none' && currentImage && (
                     <div 
                       className="absolute inset-0 pointer-events-none"
                       style={{
-                        position: 'absolute',
+                        position: 'absolute', /* 明确设置position为absolute */
                         top: 0,
                         left: 0,
                         width: '100%',
