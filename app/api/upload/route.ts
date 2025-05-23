@@ -113,12 +113,12 @@ export async function POST(request: NextRequest) {
       const command = new PutObjectCommand(uploadParams);
       await S3.send(command);
       
-      // 如果图片尺寸大于640，则生成缩略图，否则使用处理后的原图作为缩略图
-      if (imageInfo.width && imageInfo.height && (imageInfo.width > 640 || imageInfo.height > 640)) {
+      // 如果图片尺寸大于960，则生成缩略图，否则使用处理后的原图作为缩略图
+      if (imageInfo.width && imageInfo.height && (imageInfo.width > 960 || imageInfo.height > 960)) {
         thumbnailBuffer = await sharp(buffer)
           .resize({
-            width: 640,
-            height: 640,
+            width: 960,
+            height: 960,
             fit: 'inside', // 保持原始纵横比
             withoutEnlargement: true // 不放大小图片
           })

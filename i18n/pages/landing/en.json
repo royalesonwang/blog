@@ -14,9 +14,13 @@
       "items": [
         {
           "title": "Blog",
-          "url": "/posts",
+          "url": "/posts", 
           "icon": "RiQuillPenLine"
-
+        },
+        {
+          "title": "Albums",
+          "url": "/albums",
+          "icon": "RiImageLine"
         },
         {
           "title": "About",
