@@ -27,7 +27,7 @@ const PRELOAD_COUNT = 2;
 
 // 手势相关常量
 const SWIPE_THRESHOLD = 50; // 滑动阈值，超过这个距离才触发滑动动作
-const AUTO_HIDE_DELAY = 3000; // 自动隐藏UI的延迟时间（毫秒）
+const AUTO_HIDE_DELAY = 1000; // 自动隐藏UI的延迟时间（毫秒）
 
 // 创建没有关闭按钮的自定义对话框内容组件
 const CustomDialogContent = React.forwardRef<
@@ -89,10 +89,9 @@ export default function AlbumViewerDialog({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [slideDirection, setSlideDirection] = useState<'none' | 'right' | 'left'>('none');  
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [thumbnailsScrollPosition, setThumbnailsScrollPosition] = useState(0);  
-  const [showInfoBar, setShowInfoBar] = useState(false);
-  const [showThumbnails, setShowThumbnails] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);  const [thumbnailsScrollPosition, setThumbnailsScrollPosition] = useState(0);  
+  const [showInfoBar, setShowInfoBar] = useState(true);
+  const [showThumbnails, setShowThumbnails] = useState(true);
   const infoBarTimerRef = useRef<NodeJS.Timeout | null>(null);
   const thumbnailsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const thumbnailsContainerRef = useRef<HTMLDivElement>(null);
@@ -111,16 +110,31 @@ export default function AlbumViewerDialog({
   const lastTouch = useRef<{x: number, y: number} | null>(null); // 记录最后一次触摸位置
   const initialPinchDistance = useRef<number | null>(null); // 记录初始捏合距离
   // 移除触摸提示组件
-
   useEffect(() => {
     if (open && albumId) {
       fetchAlbumImages();
+      
+      // 显示上下栏
+      setShowInfoBar(true);
+      setShowThumbnails(true);
+      
+      // 清除之前的定时器
+      if (infoBarTimerRef.current) {
+        clearTimeout(infoBarTimerRef.current);
+      }
+      
+      if (thumbnailsTimerRef.current) {
+        clearTimeout(thumbnailsTimerRef.current);  
+      }
+      
+      // 设置自动隐藏定时器
+      setupAutoHideTimers();
     }
-  }, [open, albumId]);  useEffect(() => {
-    setImageLoaded(false);
+  }, [open, albumId]);useEffect(() => {    setImageLoaded(false);
     
-    // 切换图片时显示信息栏
+    // 切换图片时同时显示信息栏和缩略图
     setShowInfoBar(true);
+    setShowThumbnails(true);
     
     // 重置缩放状态
     setScale(1);
@@ -130,10 +144,12 @@ export default function AlbumViewerDialog({
       clearTimeout(infoBarTimerRef.current);
     }
     
-    // 设置定时器，3秒后隐藏信息栏
-    infoBarTimerRef.current = setTimeout(() => {
-      setShowInfoBar(false);
-    }, AUTO_HIDE_DELAY);
+    if (thumbnailsTimerRef.current) {
+      clearTimeout(thumbnailsTimerRef.current);
+    }
+    
+    // 设置定时器，自动隐藏上下栏
+    setupAutoHideTimers();
   }, [currentImageIndex]);
   // 图片预加载
   useEffect(() => {
@@ -178,14 +194,20 @@ export default function AlbumViewerDialog({
 
   const fetchAlbumImages = async () => {
     setLoading(true);
-    
-    try {
+      try {
       const response = await fetch(`/api/albums/${albumId}/images`);
       const data = await response.json();
       
       if (response.ok) {
         setImages(data.images || []);
         setCurrentImageIndex(0); // 重置为第一张图片
+        
+        // 确保在加载完图片后显示信息栏和缩略图
+        setShowInfoBar(true);
+        setShowThumbnails(true);
+        
+        // 设置自动隐藏定时器
+        setupAutoHideTimers();
       } else {
         setError(data.message || "获取相册图片失败");
       }
@@ -281,14 +303,21 @@ export default function AlbumViewerDialog({
       setTouchStartX(touches[0].clientX);
       setTouchStartY(touches[0].clientY);
       lastTouch.current = { x: touches[0].clientX, y: touches[0].clientY };
-      
-      // 显示信息栏和导航控件
+        // 同时显示上下信息栏和导航控件
       setShowInfoBar(true);
+      setShowThumbnails(true);
 
       // 清除任何现有的自动隐藏定时器
       if (infoBarTimerRef.current) {
         clearTimeout(infoBarTimerRef.current);
       }
+      
+      if (thumbnailsTimerRef.current) {
+        clearTimeout(thumbnailsTimerRef.current);
+      }
+      
+      // 设置新的自动隐藏定时器
+      setupAutoHideTimers();
       
       // 如果图片已经放大，不阻止默认行为（允许滚动查看大图）
       if (scale > 1.1) {
@@ -400,25 +429,27 @@ export default function AlbumViewerDialog({
     // 设置自动隐藏定时器
     setupAutoHideTimers();
   };
-  
-  // 设置自动隐藏UI元素的定时器
+    // 设置自动隐藏UI元素的定时器 - 上下栏同时隐藏
   const setupAutoHideTimers = () => {
-    // 信息栏自动隐藏
+    // 创建单个定时器同时处理上下栏
     if (infoBarTimerRef.current) {
       clearTimeout(infoBarTimerRef.current);
     }
-    infoBarTimerRef.current = setTimeout(() => {
-      setShowInfoBar(false);
-    }, AUTO_HIDE_DELAY);
     
-    // 缩略图自动隐藏
     if (thumbnailsTimerRef.current) {
       clearTimeout(thumbnailsTimerRef.current);
     }
-    thumbnailsTimerRef.current = setTimeout(() => {
+    
+    // 使用同一个定时器来同时隐藏上下栏
+    const timer = setTimeout(() => {
+      setShowInfoBar(false);
       setShowThumbnails(false);
     }, AUTO_HIDE_DELAY);
-  };  // 处理图片加载完成事件
+    
+    // 保存定时器引用以便后续清除
+    infoBarTimerRef.current = timer;
+    thumbnailsTimerRef.current = timer;
+  };// 处理图片加载完成事件
   const handleImageLoad = () => {
     setImageLoaded(true);
     
@@ -445,69 +476,40 @@ export default function AlbumViewerDialog({
     } else {
       setLastClickTime(now);
     }
-  };
-  // 处理鼠标移动，显示信息栏和缩略图
+  };  // 处理鼠标移动，同时显示上下栏
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.currentTarget && e.currentTarget instanceof HTMLElement) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const mouseY = e.clientY - rect.top; // Y position within the element
-      const elementHeight = rect.height;
-
-      // 检测鼠标是否在上方20%区域
-      const isInTopArea = elementHeight > 0 && mouseY < elementHeight * 0.2;
-        // 检测鼠标是否在下方30%区域
-      const isInBottomArea = elementHeight > 0 && mouseY > elementHeight * 0.8;
+      // 任何鼠标移动都同时显示上下栏
+      setShowInfoBar(true);
+      setShowThumbnails(true);
       
-      // 检测鼠标是否在左右两侧的导航箭头区域
-      const isSideButtonArea = elementHeight > 0 && 
-        ((e.clientX < rect.left + 80) || (e.clientX > rect.right - 80)) && 
-        (mouseY > elementHeight * 0.4 && mouseY < elementHeight * 0.6);
-
-      // Top Info Bar logic - 只在鼠标移入上方20%区域时显示
-      if (isInTopArea) {
-        setShowInfoBar(true);
-        // 清除之前的隐藏定时器
-        if (infoBarTimerRef.current) {
-          clearTimeout(infoBarTimerRef.current);
-          infoBarTimerRef.current = null;
-        }      } else {
-        // 当鼠标离开上方20%区域时，隐藏信息栏
-        if (showInfoBar) {
-          // 如果之前有定时器，先清除
-          if (infoBarTimerRef.current) {
-            clearTimeout(infoBarTimerRef.current);
-          }
-          // 立即隐藏信息栏，不设置延迟
-          setShowInfoBar(false);
-        }
+      // 清除之前的隐藏定时器
+      if (infoBarTimerRef.current) {
+        clearTimeout(infoBarTimerRef.current);
+        infoBarTimerRef.current = null;
       }
-
-      // Thumbnail bar logic - 在鼠标移入下方30%区域或左右导航按钮区域时显示
-      if (isInBottomArea || isSideButtonArea) {
-        setShowThumbnails(true);
-        // 清除之前的隐藏定时器
-        if (thumbnailsTimerRef.current) {
-          clearTimeout(thumbnailsTimerRef.current);
-          thumbnailsTimerRef.current = null;
-        }} else {
-        // 当鼠标离开下方30%区域时，隐藏缩略图
-        if (showThumbnails) {
-          // 如果之前有定时器，先清除
-          if (thumbnailsTimerRef.current) {
-            clearTimeout(thumbnailsTimerRef.current);
-          }
-          // 立即隐藏缩略图，不设置延迟
-          setShowThumbnails(false);
-        }
+      
+      if (thumbnailsTimerRef.current) {
+        clearTimeout(thumbnailsTimerRef.current);
+        thumbnailsTimerRef.current = null;
       }
+      
+      // 重新设置自动隐藏定时器
+      setupAutoHideTimers();
     }
   };  // 当鼠标离开内容区域时立即隐藏控制元素
   const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Top Info Bar logic - 鼠标离开时直接隐藏
+    // 鼠标离开时直接隐藏上下栏
     if (infoBarTimerRef.current) {
       clearTimeout(infoBarTimerRef.current);
     }
+    
+    if (thumbnailsTimerRef.current) {
+      clearTimeout(thumbnailsTimerRef.current);
+    }
+    
     setShowInfoBar(false);
+    setShowThumbnails(false);
 
     // Thumbnail bar logic - 检查是否移到缩略图或右箭头上
     const relatedTarget = e.relatedTarget;
@@ -530,12 +532,21 @@ export default function AlbumViewerDialog({
 
   // 处理缩略图区域的鼠标事件
   const handleThumbnailsMouseEnter = () => {
+    // 鼠标进入缩略图区域时，显示上下栏并取消自动隐藏
+    setShowInfoBar(true);
     setShowThumbnails(true);
+    
+    // 清除任何定时器
+    if (infoBarTimerRef.current) {
+      clearTimeout(infoBarTimerRef.current);
+      infoBarTimerRef.current = null;
+    }
+    
     if (thumbnailsTimerRef.current) {
       clearTimeout(thumbnailsTimerRef.current);
       thumbnailsTimerRef.current = null;
     }
-  };  const handleThumbnailsMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+  };const handleThumbnailsMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     const relatedTarget = e.relatedTarget;
     
     // 检查relatedTarget是否为有效的DOM节点
@@ -545,11 +556,8 @@ export default function AlbumViewerDialog({
     const isMovingToRightArrow = isValidNode && rightArrowRef.current && rightArrowRef.current.contains(relatedTarget as Node);
 
     if (!isMovingToContentBottom && !isMovingToRightArrow) {
-      if (thumbnailsTimerRef.current) {
-        clearTimeout(thumbnailsTimerRef.current);
-      }
-      // 离开缩略图区域时立即隐藏，改善响应速度
-      setShowThumbnails(false);
+      // 离开缩略图区域时重新启动自动隐藏定时器
+      setupAutoHideTimers();
     }
   };
 
@@ -598,10 +606,18 @@ export default function AlbumViewerDialog({
           <>            <Button
               variant="ghost"
               size="icon"
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 text-white hover:bg-black/40 rounded-full h-12 w-12 transition-opacity duration-200"
-              onClick={prevImage}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 text-white hover:bg-black/40 rounded-full h-12 w-12 transition-opacity duration-200"              onClick={prevImage}
               onMouseEnter={() => {
+                // 显示上下栏
+                setShowInfoBar(true);
                 setShowThumbnails(true);
+                
+                // 清除所有定时器
+                if (infoBarTimerRef.current) {
+                  clearTimeout(infoBarTimerRef.current);
+                  infoBarTimerRef.current = null;
+                }
+                
                 if (thumbnailsTimerRef.current) {
                   clearTimeout(thumbnailsTimerRef.current);
                   thumbnailsTimerRef.current = null;
@@ -614,10 +630,18 @@ export default function AlbumViewerDialog({
               ref={rightArrowRef}
               variant="ghost"
               size="icon"
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 text-white hover:bg-black/40 rounded-full h-12 w-12 transition-opacity duration-200"
-              onClick={nextImage}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 text-white hover:bg-black/40 rounded-full h-12 w-12 transition-opacity duration-200"              onClick={nextImage}
               onMouseEnter={() => {
+                // 显示上下栏
+                setShowInfoBar(true);
                 setShowThumbnails(true);
+                
+                // 清除所有定时器
+                if (infoBarTimerRef.current) {
+                  clearTimeout(infoBarTimerRef.current);
+                  infoBarTimerRef.current = null;
+                }
+                
                 if (thumbnailsTimerRef.current) {
                   clearTimeout(thumbnailsTimerRef.current);
                   thumbnailsTimerRef.current = null;
@@ -632,11 +656,8 @@ export default function AlbumViewerDialog({
                 const isMovingToContentBottom = isValidNode && contentRef.current && contentRef.current.contains(relatedTarget as Node) && (e.clientY - contentRef.current.getBoundingClientRect().top > contentRef.current.getBoundingClientRect().height * 0.7);
 
                 if (!isMovingToThumbnails && !isMovingToContentBottom) {
-                  if (thumbnailsTimerRef.current) {
-                    clearTimeout(thumbnailsTimerRef.current);
-                  }
-                  // 立即隐藏缩略图，不设置延迟
-                  setShowThumbnails(false);
+                  // 鼠标离开箭头按钮时，开始自动隐藏定时器
+                  setupAutoHideTimers();
                 }
               }}
             >
