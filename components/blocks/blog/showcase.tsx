@@ -12,7 +12,6 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Blog as BlogType } from "@/types/blocks/blog";
-import { useLocale } from "next-intl";
 import { getThumbnailUrl } from "@/lib/url";
 
 // Default cover image for blogs without a cover
@@ -34,13 +33,10 @@ const getImageUrl = (item: any) => {
   return DEFAULT_COVER_IMAGE;
 };
 
-export default function BlogShowcase({ blog }: { blog: BlogType }) {
+export default function BlogShowcase({ blog, locale = "en" }: { blog: BlogType; locale?: string }) {
   if (blog.disabled) {
     return null;
   }
-
-  // Get current locale
-  const locale = useLocale();
   
   // Default descriptions based on locale
   const getDefaultDescription = (locale: string) => {

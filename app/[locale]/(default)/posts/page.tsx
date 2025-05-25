@@ -43,5 +43,5 @@ export default async function ({
     read_more_text: t("blog.read_more_text"),
   };
 
-  return <Blog blog={blog} />;
+  return <Blog blog={blog} locale={locale} />;
 }
