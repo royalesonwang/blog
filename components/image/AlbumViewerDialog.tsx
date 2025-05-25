@@ -28,7 +28,7 @@ const PRELOAD_COUNT = 2;
 
 // 手势相关常量
 const SWIPE_THRESHOLD = 50; // 滑动阈值，超过这个距离才触发滑动动作
-const AUTO_HIDE_DELAY = 1000; // 自动隐藏UI的延迟时间（毫秒）
+const AUTO_HIDE_DELAY = 1500; // 自动隐藏UI的延迟时间（毫秒）
 
 // 创建没有关闭按钮的自定义对话框内容组件
 const CustomDialogContent = React.forwardRef<
@@ -68,6 +68,8 @@ interface AlbumImage {
   group_id: number;
   created_at: string;
   updated_at: string;
+  device?: string;
+  location?: string;
 }
 
 interface AlbumViewerDialogProps {
@@ -587,15 +589,19 @@ export default function AlbumViewerDialog({
           className={`absolute top-0 left-0 right-0 z-10 w-full transition-opacity duration-500 ease-in-out ${
             showInfoBar ? 'opacity-100' : 'opacity-0'
           }`}
-        >
-          <div 
+        >          <div 
             className="w-full bg-gradient-to-b from-black/70 to-transparent pt-6 pb-16 px-6"
-          >
-            <h3 className="text-lg font-medium text-white">{albumTitle}</h3>
+          >            <h3 className="text-lg font-medium text-white">{albumTitle}</h3>
             {currentImage && (
-              <p className="text-sm text-white/80 mt-1">
+              <div className="mt-1 text-sm text-white/80">
                 {formatDate(currentImage.created_at)}
-              </p>
+                {currentImage.device && (
+                  <span> · Shot on {currentImage.device}</span>
+                )}
+                {currentImage.location && (
+                  <span> · 📍 {currentImage.location}</span>
+                )}
+              </div>
             )}
           </div>
         </div>

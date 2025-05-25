@@ -41,9 +41,10 @@ interface ImageCardClientProps {
   onDelete?: (id: number) => void;
   onUpdate?: (image: ImageUpload) => void;
   folders?: string[];
+  albumId?: string; // 新增：相册ID，如果存在则表示在相册中编辑
 }
 
-export default function ImageCardClient({ image, onDelete, onUpdate, folders = [] }: ImageCardClientProps) {
+export default function ImageCardClient({ image, onDelete, onUpdate, folders = [], albumId }: ImageCardClientProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -205,9 +206,7 @@ export default function ImageCardClient({ image, onDelete, onUpdate, folders = [
         isDeleting={isDeleting}
         title="确认删除图片"
         description={`确定要删除 "${currentImage.original_file_name}" 吗？此操作无法撤销，图片将从存储中永久删除。`}
-      />
-
-      {/* 编辑图片对话框 */}
+      />      {/* 编辑图片对话框 */}
       {editDialogOpen && (
         <EditImageDialog
           open={editDialogOpen}
@@ -215,6 +214,7 @@ export default function ImageCardClient({ image, onDelete, onUpdate, folders = [
           image={currentImage}
           onUpdate={handleUpdateImage}
           folders={folders}
+          albumId={albumId}
         />
       )}
     </>

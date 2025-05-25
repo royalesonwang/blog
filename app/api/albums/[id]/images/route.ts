@@ -142,8 +142,7 @@ export async function POST(request: NextRequest) {
           { success: false, message: "源图片不存在" },
           { status: 404 }
         );
-      }
-        // 准备要插入album_image表的数据 - 移除旧的URL字段
+      }        // 准备要插入album_image表的数据 - 移除旧的URL字段
       const albumImageData = {
         id: sourceImage.id, // 保持ID一致
         file_name: sourceImage.file_name,
@@ -161,6 +160,8 @@ export async function POST(request: NextRequest) {
         bucket_name: sourceImage.bucket_name,
         is_public: sourceImage.is_public,
         uploaded_by: sourceImage.uploaded_by,
+        device: sourceImage.device,
+        location: sourceImage.location,
         group_id: id  // 设置相册ID
       };
       
@@ -185,6 +186,86 @@ export async function POST(request: NextRequest) {
       });
     }  } catch (error) {
     console.error(`Error in POST /api/albums/images:`, error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: `服务器错误: ${error instanceof Error ? error.message : "未知错误"}` 
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// 更新相册中的图片
+export async function PUT(request: NextRequest) {
+  try {
+    // 获取当前用户，验证权限
+    const user = await getUserInfo();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "未授权访问" },
+        { status: 401 }
+      );
+    }
+    
+    // 从 URL 中提取参数
+    const url = request.nextUrl;
+    const pathSegments = url.pathname.split('/');
+    const albumId = pathSegments[pathSegments.length - 2]; // albums/[id]/images
+    
+    if (!albumId || isNaN(Number(albumId))) {
+      return NextResponse.json(
+        { success: false, message: "无效的相册ID" },
+        { status: 400 }
+      );
+    }
+    
+    // 获取请求数据
+    const data = await request.json();
+    const { imageId, ...updateData } = data;
+    
+    // 检查必要字段
+    if (!imageId) {
+      return NextResponse.json(
+        { success: false, message: "缺少图片ID" },
+        { status: 400 }
+      );
+    }
+    
+    // 获取Supabase客户端
+    const supabase = getSupabaseClient();
+    
+    // 更新album_image表中的图片
+    const { data: updatedImage, error } = await supabase
+      .from("album_image")
+      .update(updateData)
+      .eq("id", imageId)
+      .eq("group_id", albumId) // 确保只更新当前相册中的图片
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error updating album image:", error);
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 500 }
+      );
+    }
+    
+    if (!updatedImage) {
+      return NextResponse.json(
+        { success: false, message: "图片不存在或不属于此相册" },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json({
+      success: true,
+      message: "图片更新成功",
+      image: updatedImage
+    });
+      } catch (error) {
+    console.error(`Error in PUT /api/albums/[id]/images:`, error);
     return NextResponse.json(
       { 
         success: false, 

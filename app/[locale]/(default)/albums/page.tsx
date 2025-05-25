@@ -22,6 +22,8 @@ interface AlbumImage {
   group_id: number;
   created_at: string;
   updated_at: string;
+  device?: string;
+  location?: string;
 }
 
 interface AlbumGroup {

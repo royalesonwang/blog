@@ -40,6 +40,8 @@ export async function POST(request: NextRequest) {
     const altText = formData.get("altText") as string || "";
     const tags = formData.get("tags") as string || "";
     const folderName = formData.get("folderName") as string || "default";
+    const device = formData.get("device") as string || "";
+    const location = formData.get("location") as string || "";
     const targetTable = formData.get("targetTable") as string || "image_uploads"; // 默认上传到image_uploads表
     const albumId = formData.get("albumId") as string || null; // 如果上传到相册，指定相册ID
     
@@ -196,7 +198,7 @@ export async function POST(request: NextRequest) {
           finalHeight = 1440;
           finalWidth = Math.round(1440 * aspectRatio);
         }
-      }        // 准备插入数据 - 使用新的 file_path 字段，不再使用 public_url 和 thumbnail_url
+      }      // 准备插入数据 - 使用新的 file_path 字段，不再使用 public_url 和 thumbnail_url
       const insertData = {
         file_name: fileName,
         original_file_name: file.name,
@@ -207,6 +209,8 @@ export async function POST(request: NextRequest) {
         description: description,
         alt_text: altText,
         tags: tagsArray,
+        device: device,
+        location: location,
         width: finalWidth,
         height: finalHeight,
         storage_provider: 'cloudflare_r2',

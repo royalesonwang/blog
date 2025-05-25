@@ -3,8 +3,6 @@ import { getSupabaseClient } from "@/models/db";
 import { auth } from "@/auth";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
- 
-
 // 初始化S3客户端连接到Cloudflare R2
 const S3 = new S3Client({
   region: "auto",
@@ -28,30 +26,36 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
-    
+
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
-    const search = searchParams.get('search') || '';
-    const folder = searchParams.get('folder') || '';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    
+    const search = searchParams.get("search") || "";
+    const folder = searchParams.get("folder") || "";
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+
     // Calculate offset for pagination
     const offset = (page - 1) * limit;
-    
+
     // Get images from database
     const supabase = getSupabaseClient();
-    
+
     // Check if user is admin
     const userInfo = session.user;
     const adminEmails = process.env.ADMIN_EMAILS?.split(",");
     const isAdmin = userInfo?.email && adminEmails?.includes(userInfo.email);
 
-    console.log("Fetching images with params:", { search, folder, page, limit, isAdmin });
-      // Build query - 使用 file_path 替代旧的 URL 字段
+    console.log("Fetching images with params:", {
+      search,
+      folder,
+      page,
+      limit,
+      isAdmin,
+    });    // Build query - 使用 file_path 替代旧的 URL 字段
     let query = supabase
-      .from('image_uploads')
-      .select(`
+      .from("image_uploads")
+      .select(
+        `
         id,
         file_name,
         original_file_name,
@@ -64,6 +68,8 @@ export async function GET(request: NextRequest) {
         alt_text,
         tags,
         folder_name,
+        device,
+        location,
         created_at,
         updated_at,
         uploaded_by,
@@ -71,18 +77,20 @@ export async function GET(request: NextRequest) {
           nickname,
           avatar_url
         )
-      `, { count: 'exact' });
-    
+      `,
+        { count: "exact" }
+      );
+
     // If not admin, only show images uploaded by the user
     if (!isAdmin) {
-      query = query.eq('uploaded_by', session.user.uuid);
+      query = query.eq("uploaded_by", session.user.uuid);
     }
-    
+
     // Add folder filter if provided
     if (folder) {
-      query = query.eq('folder_name', folder);
+      query = query.eq("folder_name", folder);
     }
-    
+
     // Add search if provided
     if (search) {
       query = query.or(`
@@ -91,14 +99,14 @@ export async function GET(request: NextRequest) {
         alt_text.ilike.%${search}%
       `);
     }
-    
+
     // 尝试处理tags字段，避免使用复杂的array操作符
     try {
       // Get paginated results
       const { data: images, count, error } = await query
-        .order('created_at', { ascending: false })
+        .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);
-      
+
       if (error) {
         console.error("Database error:", error);
         return NextResponse.json(
@@ -106,31 +114,31 @@ export async function GET(request: NextRequest) {
           { status: 500 }
         );
       }
-      
+
       console.log(`Found ${images?.length || 0} images, total count: ${count || 0}`);
-      
+
       // Transform the images data to handle the nested user data
-      const transformedImages = images?.map(image => ({
+      const transformedImages = images?.map((image) => ({
         ...image,
         user: image.users || { nickname: "Unknown", avatar_url: null },
-        users: undefined
+        users: undefined,
       }));
-      
+
       // Get unique folders for filtering
       const { data: folderData, error: folderError } = await supabase
-        .from('image_uploads')
-        .select('folder_name')
-        .order('folder_name', { ascending: true });
-      
+        .from("image_uploads")
+        .select("folder_name")
+        .order("folder_name", { ascending: true });
+
       if (folderError) {
         console.error("Error fetching folders:", folderError);
       }
-      
+
       // Extract unique folder names
-      const folders = folderData ? 
-        [...new Set(folderData.map(item => item.folder_name))].filter(Boolean) : 
-        [];
-      
+      const folders = folderData
+        ? [...new Set(folderData.map((item) => item.folder_name))].filter(Boolean)
+        : [];
+
       return NextResponse.json({
         success: true,
         images: transformedImages,
@@ -138,14 +146,16 @@ export async function GET(request: NextRequest) {
         folders,
         currentPage: page,
         totalPages: count ? Math.ceil(count / limit) : 0,
-        limit
+        limit,
       });
     } catch (queryError) {
       console.error("Query execution error:", queryError);
       return NextResponse.json(
-        { 
-          success: false, 
-          message: `Query error: ${queryError instanceof Error ? queryError.message : "Unknown query error"}` 
+        {
+          success: false,
+          message: `Query error: ${
+            queryError instanceof Error ? queryError.message : "Unknown query error"
+          }`,
         },
         { status: 500 }
       );
@@ -153,9 +163,9 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching images:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: `Failed to fetch images: ${error instanceof Error ? error.message : "Unknown error"}` 
+      {
+        success: false,
+        message: `Failed to fetch images: ${error instanceof Error ? error.message : "Unknown error"}`,
       },
       { status: 500 }
     );
@@ -175,7 +185,7 @@ export async function DELETE(request: NextRequest) {
 
     // 解析请求参数
     const { imageId } = await request.json();
-    
+
     if (!imageId) {
       return NextResponse.json(
         { success: false, message: "Image ID is required" },
@@ -185,23 +195,23 @@ export async function DELETE(request: NextRequest) {
 
     // 获取Supabase客户端
     const supabase = getSupabaseClient();
-    
+
     // 检查用户是否为管理员
     const userInfo = session.user;
     const adminEmails = process.env.ADMIN_EMAILS?.split(",");
     const isAdmin = userInfo?.email && adminEmails?.includes(userInfo.email);
 
     console.log("Deleting image with ID:", imageId);
-    
+
     // 首先获取图片信息以便之后从存储中删除
     let query = supabase
-      .from('image_uploads')
-      .select('file_name, uploaded_by')
-      .eq('id', imageId)
+      .from("image_uploads")
+      .select("file_name, uploaded_by")
+      .eq("id", imageId)
       .single();
-    
+
     const { data: imageData, error: fetchError } = await query;
-    
+
     if (fetchError) {
       console.error("Error fetching image:", fetchError);
       return NextResponse.json(
@@ -209,7 +219,7 @@ export async function DELETE(request: NextRequest) {
         { status: 500 }
       );
     }
-    
+
     // 检查权限 - 只有管理员或图片上传者可以删除
     if (!isAdmin && imageData.uploaded_by !== session.user.uuid) {
       return NextResponse.json(
@@ -217,13 +227,13 @@ export async function DELETE(request: NextRequest) {
         { status: 403 }
       );
     }
-    
+
     // 1. 从数据库删除记录
     const { error: deleteError } = await supabase
-      .from('image_uploads')
+      .from("image_uploads")
       .delete()
-      .eq('id', imageId);
-    
+      .eq("id", imageId);
+
     if (deleteError) {
       console.error("Database delete error:", deleteError);
       return NextResponse.json(
@@ -231,7 +241,7 @@ export async function DELETE(request: NextRequest) {
         { status: 500 }
       );
     }
-    
+
     // 2. 从存储中删除文件
     try {
       // 准备从R2删除原始文件
@@ -239,25 +249,25 @@ export async function DELETE(request: NextRequest) {
         Bucket: BUCKET_NAME,
         Key: imageData.file_name,
       };
-      
+
       const command = new DeleteObjectCommand(deleteParams);
       await S3.send(command);
-      
+
       console.log("R2 delete successful for original:", imageData.file_name);
-      
+
       // 删除对应的缩略图
       // 从file_name解析路径，替换uploads为thumbnail
-      if (imageData.file_name && imageData.file_name.startsWith('uploads/')) {
-        const thumbnailPath = imageData.file_name.replace('uploads/', 'thumbnail/');
-        
+      if (imageData.file_name && imageData.file_name.startsWith("uploads/")) {
+        const thumbnailPath = imageData.file_name.replace("uploads/", "thumbnail/");
+
         const thumbnailDeleteParams = {
           Bucket: BUCKET_NAME,
           Key: thumbnailPath,
         };
-        
+
         const thumbnailCommand = new DeleteObjectCommand(thumbnailDeleteParams);
         await S3.send(thumbnailCommand);
-        
+
         console.log("R2 delete successful for thumbnail:", thumbnailPath);
       }
     } catch (r2Error) {
@@ -265,20 +275,125 @@ export async function DELETE(request: NextRequest) {
       // 即使R2删除失败也继续，因为数据库记录已经删除
       // 将错误记录到日志中，但对用户返回成功
     }
-    
+
     return NextResponse.json({
       success: true,
       message: "Image deleted successfully",
-      imageId
+      imageId,
     });
   } catch (error) {
     console.error("Delete image error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: `Failed to delete image: ${error instanceof Error ? error.message : "Unknown error"}` 
+      {
+        success: false,
+        message: `Failed to delete image: ${error instanceof Error ? error.message : "Unknown error"}`,
       },
       { status: 500 }
     );
   }
-} 
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    // Get user session
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Parse request data
+    const {
+      imageId,
+      description,
+      alt_text,
+      tags,
+      folder_name,
+      device,
+      location,
+    } = await request.json();
+
+    if (!imageId) {
+      return NextResponse.json(
+        { success: false, message: "Image ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Get Supabase client
+    const supabase = getSupabaseClient();
+
+    // Check if user is admin
+    const userInfo = session.user;
+    const adminEmails = process.env.ADMIN_EMAILS?.split(",");
+    const isAdmin = userInfo?.email && adminEmails?.includes(userInfo.email);
+
+    console.log("Updating image with ID:", imageId);
+
+    // First get the image to check permissions
+    const { data: imageData, error: fetchError } = await supabase
+      .from("image_uploads")
+      .select("uploaded_by")
+      .eq("id", imageId)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching image:", fetchError);
+      return NextResponse.json(
+        { success: false, message: `Failed to find image: ${fetchError.message}` },
+        { status: 500 }
+      );
+    }
+
+    // Check permissions - only admin or image uploader can update
+    if (!isAdmin && imageData.uploaded_by !== session.user.uuid) {
+      return NextResponse.json(
+        { success: false, message: "Permission denied" },
+        { status: 403 }
+      );
+    }
+
+    // Update the image record
+    const updateData: any = {
+      updated_at: new Date().toISOString(),
+    };
+
+    // Only update provided fields
+    if (description !== undefined) updateData.description = description;
+    if (alt_text !== undefined) updateData.alt_text = alt_text;
+    if (tags !== undefined) updateData.tags = tags;
+    if (folder_name !== undefined) updateData.folder_name = folder_name;
+    if (device !== undefined) updateData.device = device;
+    if (location !== undefined) updateData.location = location;
+
+    const { error: updateError } = await supabase
+      .from("image_uploads")
+      .update(updateData)
+      .eq("id", imageId);
+
+    if (updateError) {
+      console.error("Database update error:", updateError);
+      return NextResponse.json(
+        { success: false, message: `Database error: ${updateError.message}` },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Image information updated successfully",
+      imageId,
+    });
+  } catch (error) {
+    console.error("Update image error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: `Failed to update image: ${error instanceof Error ? error.message : "Unknown error"}`,
+      },
+      { status: 500 }
+    );
+  }
+}

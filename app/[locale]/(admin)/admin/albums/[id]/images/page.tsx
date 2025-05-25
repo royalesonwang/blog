@@ -305,6 +305,7 @@ export default function AlbumImagesPage() {
                 }}
                 onDelete={handleDelete}
                 onUpdate={handleImageUpdate}
+                albumId={albumId as string}
               />
             ))}
           </div>

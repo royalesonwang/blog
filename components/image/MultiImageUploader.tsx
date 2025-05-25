@@ -59,10 +59,11 @@ export default function ImageUploader({
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
-  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
-  const [description, setDescription] = useState("");
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);  const [description, setDescription] = useState("");
   const [altText, setAltText] = useState("");
   const [tags, setTags] = useState("");
+  const [device, setDevice] = useState("");
+  const [location, setLocation] = useState("");
   const [selectedFolder, setSelectedFolder] = useState(defaultFolder);
   const [previewUrls, setPreviewUrls] = useState<{[key: string]: string}>({});
   const [selectedPreviewIndex, setSelectedPreviewIndex] = useState<number | null>(null);
@@ -179,17 +180,15 @@ export default function ImageUploader({
     try {
       // 更新当前正在上传的文件
       setCurrentFile(file);
-      
-      // 创建form数据
+        // 创建form数据
       const formData = new FormData();
-      formData.append("file", file);      formData.append("description", description);
+      formData.append("file", file);
+      formData.append("description", description);
       formData.append("altText", altText);
       formData.append("tags", tags);
       formData.append("folderName", selectedFolder);
-      formData.append("targetTable", targetTable);
-      if (albumId) {
-        formData.append("albumId", albumId);
-      }
+      formData.append("device", device);
+      formData.append("location", location);
       formData.append("targetTable", targetTable);
       if (albumId) {
         formData.append("albumId", albumId);
@@ -339,8 +338,7 @@ export default function ImageUploader({
       setCurrentFile(null);
     }
   };
-  
-  const resetForm = () => {
+    const resetForm = () => {
     // 释放预览URL资源
     Object.values(previewUrls).forEach(url => {
       URL.revokeObjectURL(url);
@@ -353,6 +351,8 @@ export default function ImageUploader({
     setDescription("");
     setAltText("");
     setTags("");
+    setDevice("");
+    setLocation("");
     setSelectedFolder(defaultFolder);
     setUploadProgress({});
     
@@ -471,8 +471,7 @@ export default function ImageUploader({
             用于屏幕阅读器和SEO的图片描述。
           </p>
         </div>
-        
-        <div className="grid gap-2">
+          <div className="grid gap-2">
           <Label htmlFor="description">描述</Label>
           <Input
             id="description"
@@ -481,6 +480,34 @@ export default function ImageUploader({
             placeholder="输入图片描述..."
             autoComplete="off"
           />
+        </div>
+        
+        <div className="grid gap-2">
+          <Label htmlFor="device">拍摄设备</Label>
+          <Input
+            id="device"
+            value={device}
+            onChange={(e) => setDevice(e.target.value)}
+            placeholder="如：iPhone 15 Pro, Canon EOS R5..."
+            autoComplete="off"
+          />
+          <p className="text-xs text-muted-foreground">
+            用于记录拍摄图片的设备信息
+          </p>
+        </div>
+        
+        <div className="grid gap-2">
+          <Label htmlFor="location">拍摄地点</Label>
+          <Input
+            id="location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="如：北京市海淀区，巴黎埃菲尔铁塔..."
+            autoComplete="off"
+          />
+          <p className="text-xs text-muted-foreground">
+            用于记录图片拍摄的地理位置信息
+          </p>
         </div>
         
         <div className="grid gap-2">

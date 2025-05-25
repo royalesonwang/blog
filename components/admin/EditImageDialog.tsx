@@ -32,6 +32,8 @@ interface ImageUpload {
   created_at: string;
   updated_at: string;
   uploaded_by: string;
+  device?: string;
+  location?: string;
   user: {
     nickname: string;
     avatar_url: string;
@@ -44,6 +46,7 @@ interface EditImageDialogProps {
   image: ImageUpload;
   onUpdate: (updatedImage: ImageUpload) => void;
   folders?: string[];
+  albumId?: string; // 新增：相册ID，如果存在则表示在相册中编辑
 }
 
 export default function EditImageDialog({ 
@@ -51,14 +54,16 @@ export default function EditImageDialog({
   onClose, 
   image, 
   onUpdate,
-  folders = []
+  folders = [],
+  albumId // 新增参数
 }: EditImageDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [isLoading, setIsLoading] = useState(false);  const [formData, setFormData] = useState({
     description: image.description || '',
     alt_text: image.alt_text || '',
     tags: image.tags ? image.tags.join(', ') : '',
-    folder_name: image.folder_name || 'default'
+    folder_name: image.folder_name || 'default',
+    device: image.device || '',
+    location: image.location || ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -85,17 +90,22 @@ export default function EditImageDialog({
       const tagsArray = formData.tags
         .split(',')
         .map(tag => tag.trim())
-        .filter(tag => tag.length > 0);
-
-      const updateData = {
+        .filter(tag => tag.length > 0);      const updateData = {
         imageId: image.id,
         description: formData.description,
         alt_text: formData.alt_text,
         tags: tagsArray,
-        folder_name: image.folder_name
+        folder_name: formData.folder_name,
+        device: formData.device,
+        location: formData.location
       };
 
-      const response = await fetch('/api/images', {
+      // 根据上下文选择正确的API端点
+      const apiUrl = albumId 
+        ? `/api/albums/${albumId}/images` 
+        : '/api/images';
+
+      const response = await fetch(apiUrl, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -106,13 +116,14 @@ export default function EditImageDialog({
       const result = await response.json();
 
       if (result.success) {
-        toast.success('Image information updated successfully');
-        onUpdate({
+        toast.success('Image information updated successfully');        onUpdate({
           ...image,
           description: formData.description,
           alt_text: formData.alt_text,
           tags: tagsArray,
-          folder_name: image.folder_name
+          folder_name: image.folder_name,
+          device: formData.device,
+          location: formData.location
         });
         onClose();
       } else {
@@ -178,9 +189,7 @@ export default function EditImageDialog({
                 placeholder="Add a more detailed description for the image"
                 rows={3}
               />
-            </div>
-
-            <div className="grid gap-2">
+            </div>            <div className="grid gap-2">
               <Label htmlFor="tags" className="flex items-center gap-1">
                 <Tag className="h-4 w-4" />
                 Tags
@@ -192,6 +201,34 @@ export default function EditImageDialog({
                 onChange={handleChange}
                 placeholder="Separate tags with commas, e.g.: logo, banner, product"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="device" className="flex items-center gap-1">
+                  📷 Device
+                </Label>
+                <Input
+                  id="device"
+                  name="device"
+                  value={formData.device}
+                  onChange={handleChange}
+                  placeholder="Camera or device used"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="location" className="flex items-center gap-1">
+                  📍 Location
+                </Label>
+                <Input
+                  id="location"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  placeholder="Where the photo was taken"
+                />
+              </div>
             </div>
 
             <div className="grid gap-2">
