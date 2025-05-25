@@ -44,13 +44,16 @@ export function getImageUrl(filePath: string): string {
       return filePath;
     }
     
-    // 如果filePath已经包含了文件夹路径，则不再添加IMAGE_FOLDER
-    if (filePath.startsWith(`${config.imageFolder}/`) || filePath.startsWith('uploads/')) {
-      return `${cleanDomain}/${filePath}`;
+    // 去掉可能以/开头的路径
+    const normalizedPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+    
+    // 如果normalizedPath已经包含了文件夹路径，则不再添加IMAGE_FOLDER
+    if (normalizedPath.startsWith(`${config.imageFolder}/`) || normalizedPath.startsWith('uploads/')) {
+      return `${cleanDomain}/${normalizedPath}`;
     }
     
     // 标准形式：域名/文件夹/文件路径
-    return `${cleanDomain}/${config.imageFolder}/${filePath}`;
+    return `${cleanDomain}/${config.imageFolder}/${normalizedPath}`;
   } catch (error) {
     console.error("Error generating image URL:", error, { filePath });
     return filePath || ''; // 失败时返回原始路径或空字符串
@@ -81,18 +84,21 @@ export function getThumbnailUrl(filePath: string): string {
       return filePath; // 如果不是上传图片URL，直接返回原URL
     }
     
-    // 如果filePath包含了uploads/路径，替换为thumbnail/
-    if (filePath.startsWith(`${config.imageFolder}/`)) {
-      return `${cleanDomain}/${filePath.replace(`${config.imageFolder}/`, `${config.thumbnailFolder}/`)}`;
+    // 去掉可能以/开头的路径
+    const normalizedPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+    
+    // 如果normalizedPath包含了uploads/路径，替换为thumbnail/
+    if (normalizedPath.startsWith(`${config.imageFolder}/`)) {
+      return `${cleanDomain}/${normalizedPath.replace(`${config.imageFolder}/`, `${config.thumbnailFolder}/`)}`;
     }
     
-    // 如果filePath已经明确以缩略图文件夹开头
-    if (filePath.startsWith(`${config.thumbnailFolder}/`)) {
-      return `${cleanDomain}/${filePath}`;
+    // 如果normalizedPath已经明确以缩略图文件夹开头
+    if (normalizedPath.startsWith(`${config.thumbnailFolder}/`)) {
+      return `${cleanDomain}/${normalizedPath}`;
     }
     
     // 标准形式：域名/缩略图文件夹/文件路径
-    return `${cleanDomain}/${config.thumbnailFolder}/${filePath}`;
+    return `${cleanDomain}/${config.thumbnailFolder}/${normalizedPath}`;
   } catch (error) {
     console.error("Error generating thumbnail URL:", error, { filePath });
     return filePath || ''; // 失败时返回原始路径或空字符串

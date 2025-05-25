@@ -203,18 +203,30 @@ export default function CloudImageDialog({
   // Handle image selection
   const handleImageClick = (image: ImageUpload) => {
     setSelectedImage(image);
-  };
-
-  // Handle insert selected image
+  };  // Handle insert selected image
   const handleInsertImage = () => {
     if (selectedImage) {
+      // 获取文件路径
+      let path = selectedImage.file_path;
+      
+      // 移除可能存在的 /uploads/ 前缀
+      const config = {
+        imageFolder: process.env.NEXT_PUBLIC_IMAGE_FOLDER || 'uploads'
+      };
+      
+      if (path.startsWith(`/${config.imageFolder}/`)) {
+        path = path.substring(`/${config.imageFolder}/`.length);
+      } else if (path.startsWith(`${config.imageFolder}/`)) {
+        path = path.substring(`${config.imageFolder}/`.length);
+      }
+      
       console.log("CloudImageDialog: inserting selected image", {
-        url: getImageUrl(selectedImage.file_path),
+        path: path,
         alt: selectedImage.alt_text || selectedImage.original_file_name
       });
       
       onImageSelected(
-        getImageUrl(selectedImage.file_path),
+        path,
         selectedImage.alt_text || selectedImage.original_file_name
       );
       onClose();

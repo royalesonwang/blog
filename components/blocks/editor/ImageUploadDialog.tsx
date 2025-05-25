@@ -73,14 +73,24 @@ export default function ImageUploadDialog({
       setFileName(images[0].fileName);
     }
   };
-  
   // 添加图片
   const handleInsertToArticle = () => {
     if (uploadedFilePath) {
-      // 生成完整的图片URL
-      const fullImageUrl = getImageUrl(uploadedFilePath);
-      // 调用父组件传入的回调，将图片URL和alt文本传递
-      onImageUploaded(fullImageUrl, altText);
+      let path = uploadedFilePath;
+      
+      // 移除可能存在的 /uploads/ 前缀
+      const config = {
+        imageFolder: process.env.NEXT_PUBLIC_IMAGE_FOLDER || 'uploads'
+      };
+      
+      if (path.startsWith(`/${config.imageFolder}/`)) {
+        path = path.substring(`/${config.imageFolder}/`.length);
+      } else if (path.startsWith(`${config.imageFolder}/`)) {
+        path = path.substring(`${config.imageFolder}/`.length);
+      }
+      
+      // 调用父组件传入的回调，将处理后的路径和alt文本传递
+      onImageUploaded(path, altText);
       resetForm();
       onClose();
     }
