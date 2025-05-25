@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import MultiImageUploader from "@/components/image/MultiImageUploader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { getImageUrl, getThumbnailUrl } from "@/lib/url";
 
 interface ImageUploadDialogProps {
   open: boolean;
@@ -29,36 +30,35 @@ export default function ImageUploadDialog({
   onClose,
   onImageUploaded,
   defaultFolder = "editor",
-}: ImageUploadDialogProps) {  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+}: ImageUploadDialogProps) {
+  const [uploadedFilePath, setUploadedFilePath] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [altText, setAltText] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [hasFileSelected, setHasFileSelected] = useState<boolean>(false);
   const [uploadedImages, setUploadedImages] = useState<Array<{
     id: string;
-    url: string;
-    thumbnailUrl: string | null;
+    file_path: string;
     fileName: string | null;
     originalName: string;
     size: number;
     width: number;
     height: number;
   }>>([]);
+
   const handleInternalImageUploaded = (
-    imageUrl: string, 
-    thumbUrl: string | null, 
+    filePath: string, 
     alt: string, 
     fileNamePath: string | null
   ) => {
-    setUploadedUrl(imageUrl);
-    setThumbnailUrl(thumbUrl);
+    setUploadedFilePath(filePath);
     setFileName(fileNamePath);
     setAltText(alt);
-  };  const handleImagesUploaded = (images: Array<{
+  };
+
+  const handleImagesUploaded = (images: Array<{
     id: string;
-    url: string;
-    thumbnailUrl: string | null;
+    file_path: string;
     fileName: string | null;
     originalName: string;
     size: number;
@@ -69,40 +69,44 @@ export default function ImageUploadDialog({
     
     // 兼容单图上传的情况，使用第一张图片作为选中图片
     if (images.length > 0) {
-      setUploadedUrl(images[0].url);
-      setThumbnailUrl(images[0].thumbnailUrl);
+      setUploadedFilePath(images[0].file_path);
       setFileName(images[0].fileName);
     }
   };
   
   // 添加图片
   const handleInsertToArticle = () => {
-    if (uploadedUrl) {
+    if (uploadedFilePath) {
+      // 生成完整的图片URL
+      const fullImageUrl = getImageUrl(uploadedFilePath);
       // 调用父组件传入的回调，将图片URL和alt文本传递
-      onImageUploaded(uploadedUrl, altText);
+      onImageUploaded(fullImageUrl, altText);
       resetForm();
       onClose();
     }
   };
   
   const resetForm = () => {
-    setUploadedUrl(null);
-    setThumbnailUrl(null);
+    setUploadedFilePath(null);
     setFileName(null);
     setAltText("");
     setPreviewUrl(null);
     setHasFileSelected(false);
     setUploadedImages([]);
   };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>          <DialogTitle className="flex items-center gap-2">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             <CloudIcon className="h-5 w-5 text-blue-500" />
             上传图片到 Cloudflare R2
           </DialogTitle>
           <DialogDescription>
             上传图片用于内容展示。大尺寸图片（超过1440px）将自动调整大小，
-            并生成缩略图（最大640px）用于显示。          </DialogDescription>
+            并生成缩略图（最大640px）用于显示。
+          </DialogDescription>
         </DialogHeader>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -110,7 +114,8 @@ export default function ImageUploadDialog({
             <CardHeader className="sticky top-0 bg-card z-10 border-b pb-3">
               <CardTitle>上传新图片</CardTitle>
               <CardDescription>
-                选择要上传到Cloudflare R2的图片文件。</CardDescription>
+                选择要上传到Cloudflare R2的图片文件。
+              </CardDescription>
             </CardHeader>
             <CardContent className="pt-3">
               <MultiImageUploader 
@@ -136,7 +141,7 @@ export default function ImageUploadDialog({
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-3">
-              {!uploadedUrl && uploadedImages.length === 0 && (
+              {!uploadedFilePath && uploadedImages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-48 text-center">
                   {previewUrl ? (
                     <img
@@ -167,14 +172,13 @@ export default function ImageUploadDialog({
                         variant="outline"
                         className="h-auto p-2 justify-start"
                         onClick={() => {
-                          setUploadedUrl(image.url);
-                          setThumbnailUrl(image.thumbnailUrl);
+                          setUploadedFilePath(image.file_path);
                           setFileName(image.fileName);
                         }}
                       >
                         <div className="flex items-center gap-2 w-full overflow-hidden">
                           <img 
-                            src={image.thumbnailUrl || image.url} 
+                            src={getThumbnailUrl(image.file_path)} 
                             alt={`图片 ${index + 1}`}
                             className="w-8 h-8 object-cover rounded"
                           />
@@ -184,7 +188,7 @@ export default function ImageUploadDialog({
                     ))}
                   </div>
                   
-                  {uploadedUrl && (
+                  {uploadedFilePath && (
                     <div className="mt-4 border-t pt-4">
                       <h4 className="text-sm font-medium mb-2">选中的图片</h4>
                       {fileName && (
@@ -198,7 +202,8 @@ export default function ImageUploadDialog({
                         <Button 
                           variant="default" 
                           onClick={() => {
-                            navigator.clipboard.writeText(uploadedUrl);
+                            const fullUrl = getImageUrl(uploadedFilePath);
+                            navigator.clipboard.writeText(fullUrl);
                             toast.success("URL已复制到剪贴板");
                           }}
                           className="w-full"
@@ -213,13 +218,15 @@ export default function ImageUploadDialog({
               )}
             </CardContent>
           </Card>
-        </div>        <DialogFooter className="flex justify-between items-center mt-4">
+        </div>
+        
+        <DialogFooter className="flex justify-between items-center mt-4">
           <Button variant="outline" onClick={onClose}>
             取消
           </Button>
           <Button 
             onClick={handleInsertToArticle} 
-            disabled={!uploadedUrl}
+            disabled={!uploadedFilePath}
           >
             添加
           </Button>

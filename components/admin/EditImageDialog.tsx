@@ -16,29 +16,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FolderIcon, Image, FileText, Tag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-// 辅助函数：获取缩略图URL
-const getThumbnailUrl = (image: any): string => {
-  // 如果已有缩略图字段，直接使用
-  if (image.thumbnail_url) {
-    return image.thumbnail_url;
-  }
-  
-  // 否则尝试从公共URL构造缩略图URL
-  if (image.public_url && image.public_url.includes('/uploads/')) {
-    return image.public_url.replace('/uploads/', '/thumbnail/');
-  }
-  
-  // 默认返回原图URL
-  return image.public_url;
-};
+import { getThumbnailUrl } from "@/lib/url";
 
 interface ImageUpload {
   id: number;
   file_name: string;
   original_file_name: string;
-  public_url: string;
-  thumbnail_url?: string;
+  file_path: string;
   file_size: number;
   mime_type: string;
   description: string;
@@ -152,11 +136,10 @@ export default function EditImageDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="flex flex-col space-y-1.5">
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">          <div className="flex flex-col space-y-1.5">
             <div className="h-40 w-full overflow-hidden rounded-md border mb-4">
               <img 
-                src={getThumbnailUrl(image)} 
+                src={getThumbnailUrl(image.file_path)} 
                 alt={image.alt_text || image.original_file_name}
                 className="h-full w-full object-contain" 
               />

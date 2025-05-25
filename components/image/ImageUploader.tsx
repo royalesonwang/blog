@@ -6,9 +6,10 @@ import { FileImage, CheckCircle2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getImageUrl, getThumbnailUrl } from "@/lib/url";
 
 interface ImageUploaderProps {
-  onImageUploaded?: (imageUrl: string, thumbnailUrl: string | null, altText: string, fileName: string | null) => void;
+  onImageUploaded?: (imageUrl: string, file_path: string, altText: string, fileName: string | null) => void;
   defaultFolder?: string;
   showPreview?: boolean;
   showFileInfo?: boolean;
@@ -25,26 +26,23 @@ export default function ImageUploader({
   previewHeight = "h-48",
   onPreviewChange,
   onFileSelected,
-}: ImageUploaderProps) {
-  const [file, setFile] = useState<File | null>(null);
+}: ImageUploaderProps) {  const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [uploadedFilePath, setUploadedFilePath] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [altText, setAltText] = useState("");
   const [tags, setTags] = useState("");
   const [selectedFolder, setSelectedFolder] = useState(defaultFolder);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
   // 清理函数，组件卸载时释放创建的预览URL
   useEffect(() => {
     return () => {
-      if (previewUrl && !uploadedUrl) {
+      if (previewUrl && !uploadedFilePath) {
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [previewUrl, uploadedUrl]);
+  }, [previewUrl, uploadedFilePath]);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
@@ -63,10 +61,8 @@ export default function ImageUploader({
       if (onFileSelected) {
         onFileSelected(true);
       }
-      
-      // 重置上传状态
-      setUploadedUrl(null);
-      setThumbnailUrl(null);
+        // 重置上传状态
+      setUploadedFilePath(null);
       setFileName(null);
     }
   };
@@ -94,10 +90,8 @@ export default function ImageUploader({
       });
 
       const data = await response.json();
-      
-      if (response.ok) {
-        setUploadedUrl(data.url);
-        setThumbnailUrl(data.thumbnailUrl);
+        if (response.ok) {
+        setUploadedFilePath(data.file_path);
         setFileName(data.fileName);
           // 上传成功后清除预览
         setPreviewUrl(null);
@@ -110,14 +104,14 @@ export default function ImageUploader({
         toast.success("Image uploaded successfully to Cloudflare R2");
         
         console.log("Upload successful with details:", {
-          original: data.url,
-          thumbnail: data.thumbnailUrl,
+          file_path: data.file_path,
           width: data.width,
           height: data.height
         });
         
         if (onImageUploaded) {
-          onImageUploaded(data.url, data.thumbnailUrl, altText, data.fileName);
+          const imageUrl = getImageUrl(data.file_path);
+          onImageUploaded(imageUrl, data.file_path, altText, data.fileName);
         }
       } else {
         throw new Error(data.message || "Failed to upload image");
@@ -128,8 +122,7 @@ export default function ImageUploader({
     } finally {
       setUploading(false);
     }
-  };
-    const resetForm = () => {
+  };    const resetForm = () => {
     if (previewUrl) {
       // 释放本地预览URL资源
       URL.revokeObjectURL(previewUrl);
@@ -137,8 +130,7 @@ export default function ImageUploader({
     
     setFile(null);
     setPreviewUrl(null);
-    setUploadedUrl(null);
-    setThumbnailUrl(null);
+    setUploadedFilePath(null);
     setFileName(null);
     setDescription("");
     setAltText("");
@@ -237,10 +229,9 @@ export default function ImageUploader({
           {uploading ? "Uploading..." : "Upload Image"}
         </Button>
       </div>
-        {showPreview && (        <div className="space-y-4">
-          {/* 只有当有预览但没上传成功时显示预览图 */}
-          {showPreview && previewUrl && !uploadedUrl && (
-            <div className={`flex items-center justify-center ${previewHeight} bg-muted rounded-md mb-4`}>
+        {showPreview && (        <div className="space-y-4">          {/* 只有当有预览但没上传成功时显示预览图 */}
+          {previewUrl && !uploadedFilePath && (
+            <div className={`flex items-center justify-center ${previewHeight} bg-muted rounded-md`}>
               <img
                 src={previewUrl}
                 alt="Preview"
@@ -250,50 +241,49 @@ export default function ImageUploader({
           )}
           
           {/* 上传成功后显示成功信息 */}
-          {uploadedUrl && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
+          {uploadedFilePath && (
+            <div className="space-y-4">              <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <p className="font-medium">Upload successful!</p>
+                <p className="font-medium">Upload Successful!</p>
               </div>
               
-              {fileName && (
+              <div className="space-y-4">
+                {showFileInfo && fileName && (
+                  <div>
+                    <Label>File Path:</Label>
+                    <div className="mt-1 text-sm text-muted-foreground">{fileName}</div>
+                  </div>
+                )}
+                
                 <div>
-                  <Label>File Path:</Label>
-                  <div className="mt-1 text-sm text-muted-foreground">{fileName}</div>
-                </div>
-              )}
-              
-              <div>
-                <Label>R2 Public URL (Original):</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input value={uploadedUrl} readOnly className="text-xs" />
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={() => {
-                      navigator.clipboard.writeText(uploadedUrl);
-                      toast.success("URL copied to clipboard");
-                    }}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Original image (max 1440px if resized)
-                </p>
-              </div>
-              
-              {thumbnailUrl && (
-                <div>
-                  <Label>Thumbnail URL:</Label>
+                  <Label>R2 Public URL (Original):</Label>
                   <div className="flex gap-2 mt-1">
-                    <Input value={thumbnailUrl} readOnly className="text-xs" />
+                    <Input value={getImageUrl(uploadedFilePath)} readOnly className="text-xs" />
                     <Button 
                       variant="outline" 
                       size="icon"
                       onClick={() => {
-                        navigator.clipboard.writeText(thumbnailUrl);
+                        navigator.clipboard.writeText(getImageUrl(uploadedFilePath));
+                        toast.success("URL copied to clipboard");
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Original image (max 1440px if resized)
+                  </p>
+                </div>
+                
+                <div>
+                  <Label>Thumbnail URL:</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input value={getThumbnailUrl(uploadedFilePath)} readOnly className="text-xs" />
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        navigator.clipboard.writeText(getThumbnailUrl(uploadedFilePath));
                         toast.success("Thumbnail URL copied to clipboard");
                       }}
                     >
@@ -304,7 +294,7 @@ export default function ImageUploader({
                     Optimized for display (max 640x640px)
                   </p>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>

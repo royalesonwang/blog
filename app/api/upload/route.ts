@@ -196,14 +196,11 @@ export async function POST(request: NextRequest) {
           finalHeight = 1440;
           finalWidth = Math.round(1440 * aspectRatio);
         }
-      }
-        // 准备插入数据
+      }        // 准备插入数据 - 使用新的 file_path 字段，不再使用 public_url 和 thumbnail_url
       const insertData = {
         file_name: fileName,
         original_file_name: file.name,
         file_path: fileName,
-        public_url: url,
-        thumbnail_url: thumbnail,
         file_size: originalBuffer.length, // 使用处理后的文件大小
         mime_type: file.type,
         folder_name: folderName,
@@ -237,12 +234,10 @@ export async function POST(request: NextRequest) {
       }
       
       console.log("Database insert successful:", data);
-      
-      return NextResponse.json({ 
+        return NextResponse.json({ 
         success: true, 
         message: "File uploaded successfully",
-        url: url,
-        thumbnailUrl: thumbnail,
+        file_path: fileName,
         fileName: fileName,
         id: data?.id,
         original_name: file.name,

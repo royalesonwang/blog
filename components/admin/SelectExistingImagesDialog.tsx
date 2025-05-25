@@ -14,13 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
+import { getThumbnailUrl } from "@/lib/url";
 
 interface ImageUpload {
   id: number;
   file_name: string;
   original_file_name: string;
-  public_url: string;
-  thumbnail_url?: string;
+  file_path: string;
   file_size: number;
   mime_type: string;
   description?: string;
@@ -133,23 +133,9 @@ export default function SelectExistingImagesDialog({
       }
     } catch (error) {
       console.error("Error adding images to album:", error);
-      toast.error("添加图片到相册失败");
-    } finally {
+      toast.error("添加图片到相册失败");    } finally {
       setAdding(false);
     }
-  };
-
-  // 获取缩略图URL
-  const getThumbnailUrl = (image: ImageUpload): string => {
-    if (image.thumbnail_url) {
-      return image.thumbnail_url;
-    }
-    
-    if (image.public_url && image.public_url.includes('/uploads/')) {
-      return image.public_url.replace('/uploads/', '/thumbnail/');
-    }
-    
-    return image.public_url;
   };
 
   return (
@@ -202,10 +188,9 @@ export default function SelectExistingImagesDialog({
                     selectedIds.includes(image.id) ? "ring-2 ring-blue-500" : ""
                   }`}
                   onClick={() => toggleSelectImage(image.id)}
-                >
-                  <div className="aspect-square bg-muted relative">
+                >                  <div className="aspect-square bg-muted relative">
                     <img
-                      src={getThumbnailUrl(image)}
+                      src={getThumbnailUrl(image.file_path)}
                       alt={image.alt_text || image.original_file_name}
                       className="w-full h-full object-cover"
                     />

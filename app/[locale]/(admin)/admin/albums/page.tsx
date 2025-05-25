@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Info, PlusCircle, FolderOpen, Pencil, Trash2, ImageIcon, BookImage } from "lucide-react";
 import { format } from "date-fns";
 import DeleteConfirmDialog from "@/components/admin/DeleteConfirmDialog";
+import { getThumbnailUrl } from "@/lib/url";
 
 interface AlbumGroup {
   id: number;
@@ -37,14 +38,14 @@ export default function AlbumsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   
   const pageSize = 10;
-
   // 获取相册封面
   const fetchAlbumCover = async (albumId: number): Promise<string | undefined> => {
     try {
       const res = await fetch(`/api/albums/${albumId}/images`);
       const data = await res.json();
       if (data.success && data.images && data.images.length > 0) {
-        return data.images[0].thumbnail_url || data.images[0].public_url;
+        // 使用file_path字段而不是已弃用的URL字段
+        return data.images[0].file_path;
       }
     } catch {}
     return undefined;
@@ -164,13 +165,12 @@ export default function AlbumsPage() {
           {searchTerm ? "没有找到匹配的相册" : "暂无相册，点击\"新建相册\"按钮创建"}
         </div>
       ) : (
-        <>
-          {/* Instagram风格网格布局 */}
+        <>          {/* Instagram风格网格布局 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {albums.map((album) => (
               <div key={album.id} className="relative group rounded-lg overflow-hidden shadow border bg-white">
                 <img
-                  src={album.cover_url || "/default_album_cover.png"}
+                  src={album.cover_url ? getThumbnailUrl(album.cover_url) : "/default_album_cover.png"}
                   alt={album.title}
                   className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                 />

@@ -14,40 +14,13 @@ import { toast } from "sonner";
 import FullScreenPreview from "./FullScreenPreview";
 import DeleteConfirmDialog from "./DeleteConfirmDialog";
 import EditImageDialog from "./EditImageDialog";
-
-// 辅助函数：获取缩略图URL
-const getThumbnailUrl = (image: any): string => {
-  // 如果已有缩略图字段，直接使用
-  if (image.thumbnail_url) {
-    return image.thumbnail_url;
-  }
-  
-  // 否则尝试从公共URL构造缩略图URL
-  if (image.public_url && image.public_url.includes('/uploads/')) {
-    return image.public_url.replace('/uploads/', '/thumbnail/');
-  }
-  
-  // 默认返回原图URL
-  return image.public_url;
-};
-
-// 确保点击大图时获取原图URL
-const getOriginalUrl = (image: any): string => {
-  // 如果URL包含缩略图路径，替换为原图路径
-  if (image.public_url && image.public_url.includes('/thumbnail/')) {
-    return image.public_url.replace('/thumbnail/', '/uploads/');
-  }
-  
-  // 否则返回原始URL
-  return image.public_url;
-};
+import { getImageUrl, getThumbnailUrl } from "@/lib/url";
 
 interface ImageUpload {
   id: number;
   file_name: string;
   original_file_name: string;
-  public_url: string;
-  thumbnail_url?: string;
+  file_path: string;
   file_size: number;
   mime_type: string;
   description: string;
@@ -124,11 +97,10 @@ export default function ImageCardClient({ image, onDelete, onUpdate, folders = [
   };
   
   return (
-    <>
-      <Card className="overflow-hidden">
+    <>      <Card className="overflow-hidden">
         <div className="aspect-square bg-muted relative group cursor-pointer" onClick={() => setPreviewOpen(true)}>
           <img
-            src={getThumbnailUrl(currentImage)}
+            src={getThumbnailUrl(currentImage.file_path)}
             alt={currentImage.alt_text || currentImage.original_file_name}
             className="object-cover w-full h-full"
           />
@@ -216,11 +188,10 @@ export default function ImageCardClient({ image, onDelete, onUpdate, folders = [
           </div>
         </CardContent>
       </Card>
-      
-      {/* 图片预览 - 使用原图 */}
+        {/* 图片预览 - 使用原图 */}
       {previewOpen && (
         <FullScreenPreview 
-          src={getOriginalUrl(currentImage)} 
+          src={getImageUrl(currentImage.file_path)} 
           alt={currentImage.alt_text || currentImage.original_file_name} 
           onClose={() => setPreviewOpen(false)} 
         />

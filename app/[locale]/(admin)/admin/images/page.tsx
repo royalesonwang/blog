@@ -31,7 +31,7 @@ interface ImageUpload {
   id: number;
   file_name: string;
   original_file_name: string;
-  public_url: string;
+  file_path: string;
   file_size: number;
   mime_type: string;
   description: string;

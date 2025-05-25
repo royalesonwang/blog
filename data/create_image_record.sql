@@ -3,7 +3,6 @@ CREATE TABLE image_uploads (
   file_name TEXT NOT NULL,
   original_file_name TEXT NOT NULL,
   file_path TEXT NOT NULL,
-  public_url TEXT NOT NULL,
   file_size BIGINT NOT NULL,
   mime_type TEXT NOT NULL,
   width INTEGER,

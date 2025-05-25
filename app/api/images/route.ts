@@ -48,16 +48,14 @@ export async function GET(request: NextRequest) {
     const isAdmin = userInfo?.email && adminEmails?.includes(userInfo.email);
 
     console.log("Fetching images with params:", { search, folder, page, limit, isAdmin });
-    
-    // Build query - 使用left join而不是inner join
+      // Build query - 使用 file_path 替代旧的 URL 字段
     let query = supabase
       .from('image_uploads')
       .select(`
         id,
         file_name,
         original_file_name,
-        public_url,
-        thumbnail_url,
+        file_path,
         file_size,
         mime_type,
         width,

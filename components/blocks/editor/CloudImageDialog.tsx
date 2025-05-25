@@ -29,6 +29,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { getImageUrl, getThumbnailUrl } from "@/lib/url";
 
 interface CloudImageDialogProps {
   open: boolean;
@@ -41,7 +42,7 @@ interface ImageUpload {
   id: number;
   file_name: string;
   original_file_name: string;
-  public_url: string;
+  file_path: string;
   file_size: number;
   mime_type: string;
   description: string;
@@ -208,12 +209,12 @@ export default function CloudImageDialog({
   const handleInsertImage = () => {
     if (selectedImage) {
       console.log("CloudImageDialog: inserting selected image", {
-        url: selectedImage.public_url,
+        url: getImageUrl(selectedImage.file_path),
         alt: selectedImage.alt_text || selectedImage.original_file_name
       });
       
       onImageSelected(
-        selectedImage.public_url,
+        getImageUrl(selectedImage.file_path),
         selectedImage.alt_text || selectedImage.original_file_name
       );
       onClose();
@@ -302,7 +303,7 @@ export default function CloudImageDialog({
                 >
                   <div className="aspect-square bg-muted relative">
                     <img
-                      src={image.public_url}
+                      src={getThumbnailUrl(image.file_path)}
                       alt={image.alt_text || image.original_file_name}
                       className="object-cover w-full h-full"
                     />

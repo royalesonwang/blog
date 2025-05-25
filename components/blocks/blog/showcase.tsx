@@ -13,24 +13,25 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Blog as BlogType } from "@/types/blocks/blog";
 import { useLocale } from "next-intl";
+import { getThumbnailUrl } from "@/lib/url";
 
 // Default cover image for blogs without a cover
 const DEFAULT_COVER_IMAGE = "https://pub-6593d615435f4165860abc01713587bb.r2.dev/default_blog_cover.png";
 
-// 处理图片URL，优先使用缩略图，如果没有则使用原图
+// 处理图片URL，使用统一的URL工具函数
 const getImageUrl = (item: any) => {
   // 如果存在缩略图URL，优先使用
   if (item.cover_thumbnail_url) {
     return item.cover_thumbnail_url;
   }
   
-  // 如果有原图URL，检查是否可以替换为缩略图路径
-  if (item.cover_url && item.cover_url.includes('/uploads/')) {
-    return item.cover_url.replace('/uploads/', '/thumbnail/');
+  // 如果有原图URL，使用getThumbnailUrl函数处理
+  if (item.cover_url) {
+    return getThumbnailUrl(item.cover_url);
   }
   
-  // 默认返回原图或默认图片
-  return item.cover_url || DEFAULT_COVER_IMAGE;
+  // 默认返回默认图片
+  return DEFAULT_COVER_IMAGE;
 };
 
 export default function BlogShowcase({ blog }: { blog: BlogType }) {

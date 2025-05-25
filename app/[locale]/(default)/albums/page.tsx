@@ -4,14 +4,13 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import AlbumViewerDialog from "@/components/image/AlbumViewerDialog";
+import { getImageUrl, getThumbnailUrl } from "@/lib/url";
 
 interface AlbumImage {
   id: number;
   file_name: string;
   original_file_name: string;
   file_path: string;
-  public_url: string;
-  thumbnail_url?: string;
   file_size: number;
   mime_type: string;
   width?: number;
@@ -40,6 +39,23 @@ export default function AlbumsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedAlbum, setSelectedAlbum] = useState<{id: number, title: string} | null>(null);
+  
+  // 追踪已经报错的图片URL，避免重复报错
+  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(new Set());
+
+  // 处理图片加载失败的助手函数
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>, filePath: string) => {
+    const imageUrl = getThumbnailUrl(filePath);
+    
+    // 只有当这个URL还没有报错过时才记录错误
+    if (!failedImageUrls.has(imageUrl)) {
+      console.error(`图片加载失败: ${imageUrl}`);
+      setFailedImageUrls(prev => new Set(prev).add(imageUrl));
+    }
+    
+    // 设置默认的错误图片
+    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
+  };
 
   useEffect(() => {
     const fetchAlbums = async () => {
@@ -61,12 +77,23 @@ export default function AlbumsPage() {
                   // 为每个相册获取图片
                   const imageResponse = await fetch(`/api/albums/${album.id}/images`);
                   const imageData = await imageResponse.json();
-                  
-                  if (imageResponse.ok) {
-                    // 将图片添加到相册中
+                    if (imageResponse.ok) {
+                    // 将图片添加到相册中，添加调试信息
+                    const images = imageData.images || [];
+                    console.log(`相册 ${album.id} 的图片数据:`, images);
+                    
+                    // 调试每张图片的路径信息
+                    images.forEach((img: AlbumImage, index: number) => {
+                      console.log(`图片 ${index + 1}:`, {
+                        file_path: img.file_path,
+                        generated_image_url: getImageUrl(img.file_path),
+                        generated_thumbnail_url: getThumbnailUrl(img.file_path)
+                      });
+                    });
+                    
                     return {
                       ...album,
-                      images: imageData.images || []
+                      images: images
                     };
                   }
                   
@@ -165,8 +192,7 @@ export default function AlbumsPage() {
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
       const coverImage = sortedImages[0]; // 最新的图片
-      
-      return {
+        return {
         id: album.id,
         title: album.title,
         description: album.description,
@@ -181,6 +207,15 @@ export default function AlbumsPage() {
         }
       };
     });
+  
+  // 添加调试信息
+  console.log("处理后的相册封面URL:", albumsWithCovers.map(album => ({
+    albumId: album.id,
+    albumTitle: album.title,
+    coverImage_file_path: album.coverImage.file_path,
+    generated_thumbnail_url: getThumbnailUrl(album.coverImage.file_path),
+    generated_image_url: getImageUrl(album.coverImage.file_path)
+  })));
   // 如果没有包含图片的相册，显示提示信息  
   if (albumsWithCovers.length === 0) {
     return (
@@ -238,18 +273,13 @@ export default function AlbumsPage() {
                         className="relative overflow-hidden group cursor-pointer aspect-square w-full"
                         style={{ minHeight: "200px" }}
                         onClick={() => setSelectedAlbum({ id: album.id, title: album.title })}
-                      >
-                        <Image
-                          src={coverImage.thumbnail_url || coverImage.public_url}
+                      >                        <Image
+                          src={getThumbnailUrl(coverImage.file_path)}
                           alt={coverImage.alt_text || album.title}
-                          fill
-                          priority={groupIndex === 0} /* 为第一组的图片添加priority属性，这些是LCP图片 */
+                          fill                          priority={groupIndex === 0} /* 为第一组的图片添加priority属性，这些是LCP图片 */
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                          onError={(e) => {
-                            console.error(`图片加载失败: ${coverImage.thumbnail_url || coverImage.public_url}`);
-                            e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
-                          }}
+                          onError={(e) => handleImageError(e, coverImage.file_path)}
                         />
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
                           <h3 className="text-base font-medium truncate">{album.title}</h3>
@@ -265,18 +295,13 @@ export default function AlbumsPage() {
                     className="relative overflow-hidden group cursor-pointer aspect-square md:aspect-[4/5] h-full w-full"
                     style={{ minHeight: "420px" }}
                     onClick={() => setSelectedAlbum({ id: group[4].id, title: group[4].title })}
-                  >
-                    <Image
-                      src={group[4].coverImage.thumbnail_url || group[4].coverImage.public_url}
+                  >                    <Image
+                      src={getThumbnailUrl(group[4].coverImage.file_path)}
                       alt={group[4].coverImage.alt_text || group[4].title}
                       fill
                       priority={groupIndex === 0} /* 为首组的图片添加priority属性 */
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      onError={(e) => {
-                        console.error(`图片加载失败: ${group[4].coverImage.thumbnail_url || group[4].coverImage.public_url}`);
-                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
-                      }}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"                      onError={(e) => handleImageError(e, group[4].coverImage.file_path)}
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
                       <h3 className="text-base font-medium truncate">{group[4].title}</h3>
@@ -296,18 +321,13 @@ export default function AlbumsPage() {
                     className="relative overflow-hidden group cursor-pointer aspect-square md:aspect-[4/5] h-full w-full"
                     style={{ minHeight: "420px" }}
                     onClick={() => setSelectedAlbum({ id: group[0].id, title: group[0].title })}
-                  >
-                    <Image
-                      src={group[0].coverImage.thumbnail_url || group[0].coverImage.public_url}
+                  >                    <Image
+                      src={getThumbnailUrl(group[0].coverImage.file_path)}
                       alt={group[0].coverImage.alt_text || group[0].title}
                       fill
                       priority={groupIndex === 0 || groupIndex === 1} /* 为第一组和第二组的大图添加priority属性 */
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      onError={(e) => {
-                        console.error(`图片加载失败: ${group[0].coverImage.thumbnail_url || group[0].coverImage.public_url}`);
-                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
-                      }}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"                      onError={(e) => handleImageError(e, group[0].coverImage.file_path)}
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
                       <h3 className="text-base font-medium truncate">{group[0].title}</h3>
@@ -326,17 +346,12 @@ export default function AlbumsPage() {
                         className="relative overflow-hidden group cursor-pointer aspect-square w-full"
                         style={{ minHeight: "200px" }}
                         onClick={() => setSelectedAlbum({ id: album.id, title: album.title })}
-                      >
-                        <Image
-                          src={coverImage.thumbnail_url || coverImage.public_url}
-                          alt={coverImage.alt_text || album.title}
-                          fill
+                      >                        <Image
+                          src={getThumbnailUrl(coverImage.file_path)}
+                          alt={coverImage.alt_text || album.title}                          fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                          onError={(e) => {
-                            console.error(`图片加载失败: ${coverImage.thumbnail_url || coverImage.public_url}`);
-                            e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
-                          }}
+                          onError={(e) => handleImageError(e, coverImage.file_path)}
                         />
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
                           <h3 className="text-base font-medium truncate">{album.title}</h3>
@@ -360,18 +375,13 @@ export default function AlbumsPage() {
                       className="col-span-6 relative overflow-hidden group cursor-pointer aspect-square w-full"
                       style={{ minHeight: "200px" }}
                       onClick={() => setSelectedAlbum({ id: album.id, title: album.title })}
-                    >
-                      <Image
-                        src={coverImage.thumbnail_url || coverImage.public_url}
+                    >                      <Image
+                        src={getThumbnailUrl(coverImage.file_path)}
                         alt={coverImage.alt_text || album.title}
-                        fill
-                        priority={groupIndex === 0 && albumIndex < 2} /* 为首组的前两张图片添加priority属性 */
+                        fill                        priority={groupIndex === 0 && albumIndex < 2} /* 为首组的前两张图片添加priority属性 */
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        onError={(e) => {
-                          console.error(`图片加载失败: ${coverImage.thumbnail_url || coverImage.public_url}`);
-                          e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
-                        }}
+                        onError={(e) => handleImageError(e, coverImage.file_path)}
                       />
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
                         <h3 className="text-base font-medium truncate">{album.title}</h3>

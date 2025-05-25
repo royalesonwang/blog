@@ -11,14 +11,15 @@ import { toast } from "sonner";
 import MultiImageUploader from "@/components/image/MultiImageUploader";
 export const runtime = 'edge';
 
-export default function ImageUploadPage() {  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+export default function ImageUploadPage() {
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [altText, setAltText] = useState<string>("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [hasFileSelected, setHasFileSelected] = useState<boolean>(false);
-  const [uploadedImages, setUploadedImages] = useState<Array<{
+  const [hasFileSelected, setHasFileSelected] = useState<boolean>(false);  const [uploadedImages, setUploadedImages] = useState<Array<{
     id: string;
+    file_path: string;
     url: string;
     thumbnailUrl: string | null;
     fileName: string | null;
@@ -27,20 +28,21 @@ export default function ImageUploadPage() {  const [uploadedUrl, setUploadedUrl]
     width: number;
     height: number;
   }>>([]);
-    const handleImageUploaded = (
+  const handleImageUploaded = (
     imageUrl: string, 
-    thumbUrl: string | null, 
+    thumbnailUrl: string, 
     alt: string, 
     fileNamePath: string | null
   ) => {
     setUploadedUrl(imageUrl);
-    setThumbnailUrl(thumbUrl);
+    setThumbnailUrl(thumbnailUrl);
     setFileName(fileNamePath);
     setAltText(alt);
   };
   
   const handleImagesUploaded = (images: Array<{
     id: string;
+    file_path: string;
     url: string;
     thumbnailUrl: string | null;
     fileName: string | null;
@@ -110,6 +112,28 @@ export default function ImageUploadPage() {  const [uploadedUrl, setUploadedUrl]
                   <h3 className="font-medium">上传成功!</h3>
                 </div>
                 
+                {/* 显示上传成功的图片 */}
+                <div className="flex justify-center mb-4">
+                  {(thumbnailUrl || uploadedUrl) ? (
+                    <img 
+                      src={thumbnailUrl || uploadedUrl} 
+                      alt={altText || "上传的图片"}
+                      className="max-h-64 max-w-full object-contain rounded-md border"
+                      onError={(e) => {
+                        console.error("Image failed to load:", e);
+                        // 如果缩略图加载失败，尝试加载原图
+                        if (e.currentTarget.src === thumbnailUrl && uploadedUrl) {
+                          e.currentTarget.src = uploadedUrl;
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="h-64 w-full flex items-center justify-center border rounded-md bg-muted">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground opacity-50" />
+                    </div>
+                  )}
+                </div>
+                
                 <div>
                   <Label>文件路径:</Label>
                   <div className="mt-1 text-sm text-muted-foreground">{fileName}</div>
@@ -144,23 +168,8 @@ export default function ImageUploadPage() {  const [uploadedUrl, setUploadedUrl]
                         复制缩略图URL
                       </Button>
                     </div>
-                  )}
-                </div>                {thumbnailUrl && (
-                  <div>
-                    <Button 
-                      variant="outline"
-                      className="w-full mt-3"
-                      onClick={() => {
-                        navigator.clipboard.writeText(thumbnailUrl);
-                        toast.success("缩略图URL已复制到剪贴板");
-                      }}
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      复制缩略图URL
-                    </Button>
-                  </div>
-                )}
-              </div>            )}
+                  )}                </div>
+              </div>)}
               {!uploadedUrl && uploadedImages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-64 text-center">
                 {previewUrl ? (
@@ -202,6 +211,12 @@ export default function ImageUploadPage() {  const [uploadedUrl, setUploadedUrl]
                           src={image.thumbnailUrl || image.url} 
                           alt={`图片 ${index + 1}`}
                           className="w-10 h-10 object-cover rounded"
+                          onError={(e) => {
+                            // 如果缩略图加载失败，尝试加载原图
+                            if (e.currentTarget.src === image.thumbnailUrl && image.url) {
+                              e.currentTarget.src = image.url;
+                            }
+                          }}
                         />
                         <span className="text-xs truncate">{image.originalName}</span>
                       </div>
@@ -212,6 +227,21 @@ export default function ImageUploadPage() {  const [uploadedUrl, setUploadedUrl]
                 {uploadedUrl && (
                   <div className="mt-4 border-t pt-4">
                     <h4 className="text-sm font-medium mb-2">选中的图片</h4>
+                    
+                    {/* 预览选中的图片 */}
+                    <div className="flex justify-center mb-4">
+                      <img 
+                        src={thumbnailUrl || uploadedUrl} 
+                        alt={altText || "选中的图片"}
+                        className="max-h-48 max-w-full object-contain rounded-md border"
+                        onError={(e) => {
+                          // 如果缩略图加载失败，尝试加载原图
+                          if (e.currentTarget.src === thumbnailUrl && uploadedUrl) {
+                            e.currentTarget.src = uploadedUrl;
+                          }
+                        }}
+                      />
+                    </div>
                     
                     {fileName && (
                       <div>
@@ -225,8 +255,12 @@ export default function ImageUploadPage() {  const [uploadedUrl, setUploadedUrl]
                           variant="default"
                           className="w-full" 
                           onClick={() => {
-                            navigator.clipboard.writeText(uploadedUrl);
-                            toast.success("原图URL已复制到剪贴板");
+                            if (uploadedUrl) {
+                              navigator.clipboard.writeText(uploadedUrl);
+                              toast.success("原图URL已复制到剪贴板");
+                            } else {
+                              toast.error("无效的URL");
+                            }
                           }}
                         >
                           <Copy className="h-4 w-4 mr-2" />
@@ -250,7 +284,7 @@ export default function ImageUploadPage() {  const [uploadedUrl, setUploadedUrl]
                         </div>
                       )}
                     </div>
-                  </div>                )}
+                  </div>)}
               </div>
             )}
           </CardContent>

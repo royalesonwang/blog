@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { getImageUrl, getThumbnailUrl } from "@/lib/url";
 
 // 动画相关常量
 const TRANSITION_DURATION = 500; // ms
@@ -56,8 +57,6 @@ interface AlbumImage {
   file_name: string;
   original_file_name: string;
   file_path: string;
-  public_url: string;
-  thumbnail_url?: string;
   file_size: number;
   mime_type: string;
   width?: number;
@@ -160,15 +159,14 @@ export default function AlbumViewerDialog({
       for (let i = 1; i <= PRELOAD_COUNT; i++) {
         const nextIdx = (currentImageIndex + i) % images.length;
         const prevIdx = (currentImageIndex - i + images.length) % images.length;
-        
-        if (typeof window !== 'undefined') {
+          if (typeof window !== 'undefined') {
           const nextImg = document.createElement('img');
-          nextImg.src = images[nextIdx].public_url;
+          nextImg.src = getImageUrl(images[nextIdx].file_path);
           nextImg.style.display = 'none';
           nextImg.setAttribute('aria-hidden', 'true');
           
           const prevImg = document.createElement('img');
-          prevImg.src = images[prevIdx].public_url;
+          prevImg.src = getImageUrl(images[prevIdx].file_path);
           prevImg.style.display = 'none';
           prevImg.setAttribute('aria-hidden', 'true');
         }
@@ -717,11 +715,10 @@ export default function AlbumViewerDialog({
                         <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                       </div>
                     )}
-                    
-                    {/* 只有在有图片数据时才渲染Image组件 */}
+                      {/* 只有在有图片数据时才渲染Image组件 */}
                     {currentImage && (
                       <Image
-                        src={currentImage?.public_url || ''}
+                        src={getImageUrl(currentImage.file_path)}
                         alt={currentImage?.alt_text || currentImage?.original_file_name || '相册图片'}
                         fill
                         className={cn(
@@ -745,9 +742,9 @@ export default function AlbumViewerDialog({
                         onError={(e) => {
                           // 尝试使用不同的URL格式重试加载
                           const currentSrc = e.currentTarget.src;
-                          if (!currentSrc.includes('retry=true') && currentImage?.public_url) {
+                          if (!currentSrc.includes('retry=true')) {
                             // 尝试添加时间戳或重试标记来绕过缓存
-                            const retryUrl = `${currentImage.public_url}${currentImage.public_url.includes('?') ? '&' : '?'}retry=true&t=${Date.now()}`;
+                            const retryUrl = `${getImageUrl(currentImage.file_path)}${getImageUrl(currentImage.file_path).includes('?') ? '&' : '?'}retry=true&t=${Date.now()}`;
                             e.currentTarget.src = retryUrl;
                           } else {
                             // 如果已经重试过，显示错误图片
@@ -757,7 +754,7 @@ export default function AlbumViewerDialog({
                         }}
                       />
                     )}
-                  </div>{/* 过渡动画图片 */}
+                  </div>                  {/* 过渡动画图片 */}
                   {slideDirection !== 'none' && currentImage && (
                     <div 
                       className="absolute inset-0 pointer-events-none"
@@ -777,8 +774,8 @@ export default function AlbumViewerDialog({
                       <Image
                         src={
                           slideDirection === 'right' 
-                            ? images[(currentImageIndex - 1 + images.length) % images.length]?.public_url 
-                            : images[(currentImageIndex + 1) % images.length]?.public_url
+                            ? getImageUrl(images[(currentImageIndex - 1 + images.length) % images.length]?.file_path)
+                            : getImageUrl(images[(currentImageIndex + 1) % images.length]?.file_path)
                         }
                         alt="Previous image"
                         fill
@@ -791,7 +788,7 @@ export default function AlbumViewerDialog({
                         }}
                       />
                     </div>
-                  )}                </div>          {renderImageControls()}
+                  )}</div>          {renderImageControls()}
               </div>            
             </>
           )}
@@ -825,10 +822,9 @@ export default function AlbumViewerDialog({
                           : "opacity-70 hover:opacity-90 hover:scale-105 hover:shadow-sm brightness-90 hover:brightness-100"
                       }`}
                       onClick={() => setCurrentImageIndex(index)}
-                    >
-                      <div className="relative w-16 h-16">
+                    >                      <div className="relative w-16 h-16">
                         <Image
-                          src={image.thumbnail_url || image.public_url}
+                          src={getThumbnailUrl(image.file_path)}
                           alt={image.alt_text || image.original_file_name || `图片 ${index + 1}`}
                           fill
                           sizes="64px"

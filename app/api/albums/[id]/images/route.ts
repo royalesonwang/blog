@@ -143,15 +143,12 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
-      
-      // 准备要插入album_image表的数据
+        // 准备要插入album_image表的数据 - 移除旧的URL字段
       const albumImageData = {
         id: sourceImage.id, // 保持ID一致
         file_name: sourceImage.file_name,
         original_file_name: sourceImage.original_file_name,
         file_path: sourceImage.file_path,
-        public_url: sourceImage.public_url,
-        thumbnail_url: sourceImage.thumbnail_url,
         file_size: sourceImage.file_size,
         mime_type: sourceImage.mime_type,
         folder_name: sourceImage.folder_name,

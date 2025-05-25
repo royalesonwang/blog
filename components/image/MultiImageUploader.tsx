@@ -9,11 +9,11 @@ import { Label } from "@/components/ui/label";
 // 从本地导入 ProgressCircle 组件
 import { ProgressCircle } from "./ProgressCircle";
 import { cn } from "@/lib/utils";
+import { getImageUrl, getThumbnailUrl } from "@/lib/url";
 
 interface UploadedImage {
   id: string;
-  url: string;
-  thumbnailUrl: string | null;
+  file_path: string;
   fileName: string | null;
   originalName: string;
   size: number;
@@ -21,9 +21,14 @@ interface UploadedImage {
   height: number;
 }
 
+interface UploadedImageWithUrls extends UploadedImage {
+  url: string;
+  thumbnailUrl: string | null;
+}
+
 interface ImageUploaderProps {
-  onImagesUploaded?: (images: UploadedImage[]) => void;
-  onImageUploaded?: (imageUrl: string, thumbnailUrl: string | null, altText: string, fileName: string | null) => void;
+  onImagesUploaded?: (images: UploadedImageWithUrls[]) => void;
+  onImageUploaded?: (imageUrl: string, thumbnailUrl: string, altText: string, fileName: string | null) => void;
   defaultFolder?: string;
   showPreview?: boolean;
   showFileInfo?: boolean;
@@ -224,26 +229,27 @@ export default function ImageUploader({
       }));
 
       const data = await response.json();
-      
-      if (response.ok) {
+        if (response.ok) {
         const uploadedImage: UploadedImage = {
           id: data.id,
-          url: data.url,
-          thumbnailUrl: data.thumbnailUrl,
+          file_path: data.file_path,
           fileName: data.fileName,
           originalName: data.original_name,
           size: data.size,
           width: data.width,
           height: data.height
-        };
-
-        console.log("Upload successful with details:", uploadedImage);
-        
-        // 单图上传回调兼容旧版接口
+        };      console.log("Upload successful with details:", uploadedImage);
+          // 单图上传回调兼容旧版接口
         if (!multiple && onImageUploaded) {
-          onImageUploaded(data.url, data.thumbnailUrl, altText, data.fileName);
+          try {
+            const imageUrl = data.file_path ? getImageUrl(data.file_path) : '';
+            const thumbnailUrl = data.file_path ? getThumbnailUrl(data.file_path) : '';
+            onImageUploaded(imageUrl, thumbnailUrl, altText, data.fileName);
+          } catch (error) {
+            console.error("Error processing image URLs for callback:", error);
+            onImageUploaded('', '', altText, data.fileName);
+          }
         }
-        
         return uploadedImage;
       } else {
         throw new Error(data.message || "上传图片失败");
@@ -283,10 +289,29 @@ export default function ImageUploader({
       
       // 更新上传完成的图片列表
       setUploadedImages(results);
-      
-      // 多图上传回调
+        // 多图上传回调
       if (onImagesUploaded && results.length > 0) {
-        onImagesUploaded(results);
+        // 转换为页面组件期望的格式，添加url和thumbnailUrl字段
+        const processedResults = results.map(img => {
+          try {
+            const imageUrl = img.file_path ? getImageUrl(img.file_path) : '';
+            // 构建缩略图URL
+            const thumbnailUrl = img.file_path ? getThumbnailUrl(img.file_path) : null;
+            return {
+              ...img,
+              url: imageUrl,
+              thumbnailUrl: thumbnailUrl
+            };
+          } catch (error) {
+            console.error("Error processing image URLs:", error);
+            return {
+              ...img,
+              url: '',
+              thumbnailUrl: null
+            };
+          }
+        });
+        onImagesUploaded(processedResults);
       }
       
       // 清除预览
@@ -524,17 +549,16 @@ export default function ImageUploader({
                         <ImageIcon className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm font-medium">{image.originalName}</span>
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         <div>
                           <Label>原图 URL:</Label>
                           <div className="flex gap-2 mt-1">
-                            <Input value={image.url} readOnly className="text-xs" />
+                            <Input value={getImageUrl(image.file_path)} readOnly className="text-xs" />
                             <Button 
                               variant="outline" 
                               size="icon"
                               onClick={() => {
-                                navigator.clipboard.writeText(image.url);
+                                navigator.clipboard.writeText(getImageUrl(image.file_path));
                                 toast.success("URL已复制到剪贴板");
                               }}
                             >
@@ -543,25 +567,22 @@ export default function ImageUploader({
                           </div>
                         </div>
                         
-                        {image.thumbnailUrl && (                          <div>
-                            <Label>缩略图 URL:</Label>
-                            <div className="flex gap-2 mt-1">
-                              <Input value={image.thumbnailUrl || ""} readOnly className="text-xs" />
-                              <Button 
-                                variant="outline" 
-                                size="icon"
-                                onClick={() => {
-                                  if (image.thumbnailUrl) {
-                                    navigator.clipboard.writeText(image.thumbnailUrl);
-                                    toast.success("缩略图URL已复制到剪贴板");
-                                  }
-                                }}
-                              >
-                                <Copy className="h-4 w-4" />
-                              </Button>
-                            </div>
+                        <div>
+                          <Label>缩略图 URL:</Label>
+                          <div className="flex gap-2 mt-1">
+                            <Input value={getThumbnailUrl(image.file_path)} readOnly className="text-xs" />
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              onClick={() => {
+                                navigator.clipboard.writeText(getThumbnailUrl(image.file_path));
+                                toast.success("缩略图URL已复制到剪贴板");
+                              }}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                   ))}

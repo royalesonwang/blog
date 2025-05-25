@@ -24,7 +24,6 @@ interface AlbumImage {
   file_name: string;
   original_file_name: string;
   file_path: string;
-  public_url: string;
   file_size: number;
   mime_type: string;
   width?: number;
@@ -36,7 +35,6 @@ interface AlbumImage {
   group_id: number;
   bucket_name: string;
   is_public: boolean;
-  thumbnail_url?: string;
   created_at: string;
   updated_at: string;
   uploaded_by?: string;
@@ -286,16 +284,14 @@ export default function AlbumImagesPage() {
               </Button>
             </CardContent>
           </Card>
-        ) : (          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {images.map((image) => (
+        ) : (          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">            {images.map((image) => (
               <ImageCardClient 
                 key={image.id} 
                 image={{
                   id: image.id,
                   file_name: image.file_name,
                   original_file_name: image.original_file_name,
-                  public_url: image.public_url,
-                  thumbnail_url: image.thumbnail_url,
+                  file_path: image.file_path,
                   file_size: image.file_size,
                   mime_type: image.mime_type,
                   description: image.description || '',
