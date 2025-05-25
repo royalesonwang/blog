@@ -35,40 +35,6 @@ export default function BlogDetail({ post }: { post: Post }) {
   const [previewSrc, setPreviewSrc] = useState('');
   const [previewAlt, setPreviewAlt] = useState('');
   
-  // 追踪已经报错的图片URL，避免重复报错和重复请求
-  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(new Set());
-
-  // 处理图片加载失败的助手函数
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event> | Event) => {
-    const imgElement = e.target as HTMLImageElement;
-    const currentSrc = imgElement.src;
-    
-    // 只有当这个URL还没有报错过时才记录错误
-    if (!failedImageUrls.has(currentSrc)) {
-      console.error(`图片加载失败: ${currentSrc}`);
-      setFailedImageUrls(prev => new Set(prev).add(currentSrc));
-    }
-    
-    // 如果是缩略图加载失败，尝试使用原图
-    if (currentSrc.includes('/thumbnail/')) {
-      const originalSrc = currentSrc.replace('/thumbnail/', '/uploads/');
-      console.log(`尝试使用原图: ${originalSrc}`);
-      imgElement.src = originalSrc;
-    } 
-    // 如果有data-original-src属性，尝试使用它
-    else if (imgElement.getAttribute('data-original-src')) {
-      const originalSrc = imgElement.getAttribute('data-original-src');
-      if (originalSrc && originalSrc !== currentSrc) {
-        console.log(`尝试使用原始URL: ${originalSrc}`);
-        imgElement.src = originalSrc;
-      }
-    }
-    // 兜底方案：显示图片加载失败占位图
-    else {
-      imgElement.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' text-anchor='middle' alignment-baseline='middle' fill='%23999'%3E图片加载失败%3C/text%3E%3C/svg%3E";
-    }
-  };
-
   useEffect(() => {
     // 初始设置宽度
     if (tocContainerRef.current) {
@@ -226,6 +192,7 @@ export default function BlogDetail({ post }: { post: Post }) {
       window.removeEventListener('resize', handlePositioning);
     };
   }, []);
+
   // 添加图片点击事件监听器
   useEffect(() => {
     const handleImageClick = (e: MouseEvent) => {
@@ -239,14 +206,14 @@ export default function BlogDetail({ post }: { post: Post }) {
         
         // 获取图片信息
         const imgElement = target as HTMLImageElement;
-        // 获取原始图片URL（高清大图）
+          // 转换URL从缩略图到原图（如果需要）
         let originalSrc = imgElement.src;
         
         // 如果是缩略图URL，转换为原图URL
         if (originalSrc.includes('/thumbnail/')) {
           originalSrc = originalSrc.replace('/thumbnail/', '/uploads/');
         }
-        // 如果有data-original-src属性，优先使用它（这是之前保存的原图URL）
+        // 如果有data-original-src属性，使用它
         else if (imgElement.getAttribute('data-original-src')) {
           originalSrc = imgElement.getAttribute('data-original-src') || originalSrc;
         }
@@ -255,7 +222,6 @@ export default function BlogDetail({ post }: { post: Post }) {
           originalSrc = getImageUrl(originalSrc);
         }
         
-        // 设置预览图片数据，并打开预览
         setPreviewSrc(originalSrc);
         setPreviewAlt(imgElement.alt || '图片预览');
         setPreviewOpen(true);
@@ -313,7 +279,9 @@ export default function BlogDetail({ post }: { post: Post }) {
         overflow: hidden;
       }
     `;
-    document.head.appendChild(styleEl);    // 处理图片元素，添加缩放图标并将图片URL转换为缩略图URL
+    document.head.appendChild(styleEl);
+
+    // 处理图片元素，添加缩放图标并将图片URL转换为缩略图URL
     const wrapImages = () => {
       if (!contentRef.current) return;
       
@@ -322,52 +290,21 @@ export default function BlogDetail({ post }: { post: Post }) {
       
       images.forEach(img => {
         const imgElement = img as HTMLImageElement;
+        
         // 如果图片已经被处理过，跳过
         if (imgElement.parentElement?.classList.contains('img-container')) return;
-        
-        // 处理图片URL，优先显示缩略图并保存原图URL
-        let originalSrc = imgElement.src;
-        let thumbnailSrc = '';
-        
-        // 如果是完整的上传图片URL
-        if (originalSrc.includes('/uploads/')) {
+          // 将图片URL从原图转换为缩略图（如果可能）
+        // 保存原始URL作为自定义属性，以便点击时恢复
+        if (imgElement.src.includes('/uploads/')) {
+          const originalSrc = imgElement.src;
           imgElement.setAttribute('data-original-src', originalSrc);
-          thumbnailSrc = getThumbnailUrl(originalSrc);
+          imgElement.src = getThumbnailUrl(originalSrc);
         }
-        // 如果是相对路径
-        else if (!originalSrc.startsWith('http')) {
-          const fullImageUrl = getImageUrl(originalSrc);
-          imgElement.setAttribute('data-original-src', fullImageUrl);
-          thumbnailSrc = getThumbnailUrl(originalSrc);
-        }
-        // 如果已经是完整URL但不是上传图片，保持原样
-        else {
-          imgElement.setAttribute('data-original-src', originalSrc);
-          thumbnailSrc = originalSrc;
-        }          // 设置缩略图URL并添加错误处理
-        if (thumbnailSrc && thumbnailSrc !== originalSrc) {
-          imgElement.src = thumbnailSrc;
-          
-          // 添加错误处理函数
-          imgElement.onerror = function(this: HTMLImageElement) {
-            const currentSrc = this.src;
-            console.error(`图片加载失败: ${currentSrc}`);
-            
-            // 如果是缩略图URL失败，尝试使用原图
-            if (currentSrc.includes('/thumbnail/')) {
-              const originalSrc = currentSrc.replace('/thumbnail/', '/uploads/');
-              console.log(`尝试使用原图: ${originalSrc}`);
-              this.src = originalSrc;
-            } 
-            // 如果有data-original-src属性，尝试使用它
-            else if (this.getAttribute('data-original-src')) {
-              const originalSrc = this.getAttribute('data-original-src');
-              if (originalSrc && originalSrc !== currentSrc) {
-                console.log(`尝试使用原始URL: ${originalSrc}`);
-                this.src = originalSrc;
-              }
-            }
-          };
+        // 如果是相对路径，使用URL工具函数处理
+        else if (!imgElement.src.startsWith('http')) {
+          const originalPath = imgElement.src;
+          imgElement.setAttribute('data-original-src', getImageUrl(originalPath));
+          imgElement.src = getThumbnailUrl(originalPath);
         }
         
         // 创建容器和放大图标

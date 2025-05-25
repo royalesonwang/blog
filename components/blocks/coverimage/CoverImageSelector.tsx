@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import ImageUploadDialog from "@/components/blocks/editor/ImageUploadDialog";
 import CloudImageDialog from "@/components/blocks/editor/CloudImageDialog";
-import { getImageUrl, getPublicUrl } from "@/lib/url";
+import { getImageUrl } from "@/lib/url";
 
 interface CoverImageSelectorProps {
   value: string;
@@ -59,20 +59,9 @@ export default function CoverImageSelector({
       <div className="flex flex-col space-y-2">        {inputValue && (
           <div className="w-full h-40 mb-2 relative rounded-md overflow-hidden border">
             <img
-              src={getPublicUrl(inputValue)}
+              src={getImageUrl(inputValue)}
               alt="Cover preview"
               className="w-full h-full object-cover"
-              onError={(e) => {
-                console.warn('Cover image failed to load:', inputValue);
-                // 如果加载失败，尝试作为相对路径处理
-                if (!inputValue.startsWith('http')) {
-                  const target = e.target as HTMLImageElement;
-                  const fallbackUrl = getImageUrl(inputValue);
-                  if (fallbackUrl !== target.src) {
-                    target.src = fallbackUrl;
-                  }
-                }
-              }}
             />
           </div>
         )}
