@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import { Blog as BlogType } from "@/types/blocks/blog";
+import { useLocale } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { getThumbnailUrl } from "@/lib/url";
 
@@ -22,10 +23,13 @@ const getImageUrl = (item: any) => {
   return DEFAULT_COVER_IMAGE;
 };
 
-export default function Blog({ blog, locale = "en" }: { blog: BlogType; locale?: string }) {
+export default function Blog({ blog }: { blog: BlogType }) {
   if (blog.disabled) {
     return null;
   }
+  
+  // Get current locale
+  const locale = useLocale();
   
   // Default descriptions based on locale
   const getDefaultDescription = (locale: string) => {
