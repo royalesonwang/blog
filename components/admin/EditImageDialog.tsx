@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -65,6 +65,21 @@ export default function EditImageDialog({
     device: image.device || '',
     location: image.location || ''
   });
+  // 当image prop变化时，重新初始化表单数据
+  useEffect(() => {
+    console.log('EditImageDialog - image object:', image);
+    console.log('EditImageDialog - device:', image.device);
+    console.log('EditImageDialog - location:', image.location);
+    
+    setFormData({
+      description: image.description || '',
+      alt_text: image.alt_text || '',
+      tags: image.tags ? image.tags.join(', ') : '',
+      folder_name: image.folder_name || 'default',
+      device: image.device || '',
+      location: image.location || ''
+    });
+  }, [image]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

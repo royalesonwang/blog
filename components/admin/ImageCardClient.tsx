@@ -30,6 +30,8 @@ interface ImageUpload {
   created_at: string;
   updated_at: string;
   uploaded_by: string;
+  device?: string;
+  location?: string;
   user: {
     nickname: string;
     avatar_url: string;

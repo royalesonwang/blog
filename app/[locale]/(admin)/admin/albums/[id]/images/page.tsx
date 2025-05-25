@@ -38,6 +38,8 @@ interface AlbumImage {
   created_at: string;
   updated_at: string;
   uploaded_by?: string;
+  device?: string;
+  location?: string;
   user?: {
     nickname: string;
     avatar_url: string;
@@ -284,8 +286,7 @@ export default function AlbumImagesPage() {
               </Button>
             </CardContent>
           </Card>
-        ) : (          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">            {images.map((image) => (
-              <ImageCardClient 
+        ) : (          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">            {images.map((image) => (              <ImageCardClient 
                 key={image.id} 
                 image={{
                   id: image.id,
@@ -301,6 +302,8 @@ export default function AlbumImagesPage() {
                   created_at: image.created_at,
                   updated_at: image.updated_at,
                   uploaded_by: image.uploaded_by || '',
+                  device: image.device || '',
+                  location: image.location || '',
                   user: image.user || { nickname: 'User', avatar_url: '' }
                 }}
                 onDelete={handleDelete}
