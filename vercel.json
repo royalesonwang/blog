@@ -3,8 +3,5 @@
     "app/api/**/*": {
       "maxDuration": 60
     }
-  },
-  "limits": {
-    "bodySize": "24mb"
   }
 }
