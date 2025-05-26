@@ -57,24 +57,33 @@ export default function ImageCardClient({ image, onDelete, onUpdate, folders = [
   useEffect(() => {
     setCurrentImage(image);
   }, [image]);
-  
-  // 删除图片的处理函数
+    // 删除图片的处理函数
   const handleDeleteImage = async () => {
     try {
       setIsDeleting(true);
       
-      const response = await fetch('/api/images', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ imageId: currentImage.id }),
-      });
+      let response;
+      
+      if (albumId) {
+        // 如果是相册图片，使用相册专用API
+        response = await fetch(`/api/albums/${albumId}/images/${currentImage.id}`, {
+          method: 'DELETE',
+        });
+      } else {
+        // 否则使用通用图片API
+        response = await fetch('/api/images', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ imageId: currentImage.id }),
+        });
+      }
       
       const result = await response.json();
       
       if (result.success) {
-        toast.success('图片删除成功');
+        toast.success(albumId ? '图片从相册中移除成功' : '图片删除成功');
         // 调用父组件的删除回调，更新UI
         if (onDelete) {
           onDelete(currentImage.id);

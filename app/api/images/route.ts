@@ -181,16 +181,30 @@ export async function DELETE(request: NextRequest) {
         { success: false, message: "Unauthorized" },
         { status: 401 }
       );
-    }
+    }    // 从URL查询参数获取图片ID
+    const searchParams = request.nextUrl.searchParams;
+    let imageId = searchParams.get("imageId");
 
-    // 解析请求参数
-    const { imageId } = await request.json();
-
+    // 如果URL参数中没有imageId，尝试从请求体获取
     if (!imageId) {
-      return NextResponse.json(
-        { success: false, message: "Image ID is required" },
-        { status: 400 }
-      );
+      try {
+        const body = await request.json();
+        if (body.imageId) {
+          imageId = body.imageId.toString();
+          console.log("Got imageId from request body:", imageId);
+        } else {
+          return NextResponse.json(
+            { success: false, message: "Image ID is required" },
+            { status: 400 }
+          );
+        }
+      } catch (e) {
+        // 请求体解析失败
+        return NextResponse.json(
+          { success: false, message: "Image ID is required. Send it either as a URL query parameter or in request body." },
+          { status: 400 }
+        );
+      }
     }
 
     // 获取Supabase客户端
@@ -199,13 +213,15 @@ export async function DELETE(request: NextRequest) {
     // 检查用户是否为管理员
     const userInfo = session.user;
     const adminEmails = process.env.ADMIN_EMAILS?.split(",");
-    const isAdmin = userInfo?.email && adminEmails?.includes(userInfo.email);
+    const isAdmin = userInfo?.email && adminEmails?.includes(userInfo.email);    console.log("Deleting image with ID:", imageId);
 
-    console.log("Deleting image with ID:", imageId);
-
-    // 首先获取图片信息以便之后从存储中删除
+    // 检查是否有sourceTable参数，如果有则从指定表删除，默认为image_uploads
+    const sourceTable = request.nextUrl.searchParams.get("sourceTable") || "image_uploads";
+    console.log("Source table:", sourceTable);
+    
+    // 首先从指定表获取图片信息以便之后从存储中删除
     let query = supabase
-      .from("image_uploads")
+      .from(sourceTable)
       .select("file_name, uploaded_by")
       .eq("id", imageId)
       .single();
@@ -213,7 +229,33 @@ export async function DELETE(request: NextRequest) {
     const { data: imageData, error: fetchError } = await query;
 
     if (fetchError) {
-      console.error("Error fetching image:", fetchError);
+      console.error(`Error fetching image from ${sourceTable}:`, fetchError);
+      
+      // 如果从指定表获取失败，且指定表是image_uploads，则尝试从album_image获取
+      if (sourceTable === "image_uploads") {
+        console.log("Trying to find image in album_image table");
+        const { data: albumImageData, error: albumFetchError } = await supabase
+          .from("album_image")
+          .select("file_name, uploaded_by")
+          .eq("id", imageId)
+          .single();
+          
+        if (albumFetchError) {
+          console.error("Error fetching image from album_image:", albumFetchError);
+          return NextResponse.json(
+            { success: false, message: `Failed to find image in any table: ${albumFetchError.message}` },
+            { status: 500 }
+          );
+        }
+        
+        // 如果在album_image表中找到了图片
+        console.log("Found image in album_image table");
+        return NextResponse.json(
+          { success: false, message: `This image belongs to an album. Please use sourceTable=album_image parameter.` },
+          { status: 400 }
+        );
+      }
+      
       return NextResponse.json(
         { success: false, message: `Failed to find image: ${fetchError.message}` },
         { status: 500 }
@@ -226,16 +268,14 @@ export async function DELETE(request: NextRequest) {
         { success: false, message: "Permission denied" },
         { status: 403 }
       );
-    }
-
-    // 1. 从数据库删除记录
+    }    // 1. 从数据库删除记录
     const { error: deleteError } = await supabase
-      .from("image_uploads")
+      .from(sourceTable)
       .delete()
       .eq("id", imageId);
 
     if (deleteError) {
-      console.error("Database delete error:", deleteError);
+      console.error(`Database delete error from ${sourceTable}:`, deleteError);
       return NextResponse.json(
         { success: false, message: `Database error: ${deleteError.message}` },
         { status: 500 }
@@ -274,12 +314,11 @@ export async function DELETE(request: NextRequest) {
       console.error("R2 delete error:", r2Error);
       // 即使R2删除失败也继续，因为数据库记录已经删除
       // 将错误记录到日志中，但对用户返回成功
-    }
-
-    return NextResponse.json({
+    }    return NextResponse.json({
       success: true,
-      message: "Image deleted successfully",
+      message: `Image deleted successfully from ${sourceTable}`,
       imageId,
+      sourceTable,
     });
   } catch (error) {
     console.error("Delete image error:", error);
