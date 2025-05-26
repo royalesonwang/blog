@@ -44,6 +44,7 @@ interface ImageUploaderProps {
   maxImageWidth?: number; // 压缩后的最大宽度
   maxImageHeight?: number; // 压缩后的最大高度
   imageQuality?: number; // 压缩质量(0-1)
+  addWatermarkByDefault?: boolean; // 默认是否添加水印
 }
 
 export default function ImageUploader({
@@ -56,13 +57,13 @@ export default function ImageUploader({
   onPreviewChange,
   onFileSelected,
   multiple = false,
-  maxFiles = 10,
-  targetTable = "image_uploads",
+  maxFiles = 10,  targetTable = "image_uploads",
   albumId,
   compressImages = true, // 默认启用压缩
   maxImageWidth = 1440, // 与后端一致
   maxImageHeight = 1440, // 与后端一致
   imageQuality = 1, // 默认质量100%
+  addWatermarkByDefault = true, // 默认添加水印
 }: ImageUploaderProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
@@ -83,6 +84,8 @@ export default function ImageUploader({
   const [selectedPreviewIndex, setSelectedPreviewIndex] = useState<number | null>(null);
   // 添加一个状态来控制是否启用压缩
   const [enableCompression, setEnableCompression] = useState<boolean>(compressImages);
+  // 添加一个状态来控制是否添加水印
+  const [addWatermark, setAddWatermark] = useState<boolean>(addWatermarkByDefault);
 
   // 清理函数，组件卸载时释放创建的预览URL
   useEffect(() => {
@@ -381,11 +384,10 @@ export default function ImageUploader({
     if (onFileSelected) {
       onFileSelected(false);
     }
-  };
-  // 图片压缩函数
+  };  // 图片压缩和添加水印函数
   const compressImage = async (file: File): Promise<File> => {
-    // 如果用户禁用了压缩或文件不是图片类型或是GIF格式(GIF不适合用canvas压缩)，直接返回原文件
-    if (!enableCompression || !file.type.startsWith('image/') || file.type === 'image/gif') {
+    // 如果用户禁用了压缩且不需要添加水印，或者文件是GIF格式(GIF不适合用canvas压缩)，直接返回原文件
+    if ((!enableCompression && !addWatermark) || file.type === 'image/gif') {
       return file;
     }
 
@@ -402,9 +404,11 @@ export default function ImageUploader({
             let width = img.width;
             let height = img.height;
             
-            // 检查是否需要调整大小
-            if (width <= maxImageWidth && height <= maxImageHeight && file.size < 1024 * 1024) {
-              // 如果文件小于1MB且尺寸不超过限制，则不压缩
+            // 检查是否需要调整大小并添加水印
+            const shouldProcessImage = width > maxImageWidth || height > maxImageHeight || file.size >= 1024 * 1024 || addWatermark;
+            
+            if (!shouldProcessImage) {
+              // 如果文件小于1MB且尺寸不超过限制，且不需要添加水印，则不处理
               resolve(file);
               return;
             }
@@ -438,47 +442,80 @@ export default function ImageUploader({
             // 绘制图片
             ctx.drawImage(img, 0, 0, width, height);
             
-            // 将canvas内容转换为Blob
-            canvas.toBlob(
-              (blob) => {
-                if (!blob) {
-                  console.error('无法生成blob');
-                  resolve(file);
-                  return;
-                }
+            // 添加水印
+            if (addWatermark) {
+              const watermark = new Image();
+              watermark.onload = () => {                // 水印位置计算 - 底部居中
+                const watermarkWidth = Math.min(height * 0.2, watermark.width); // 限制水印大小为图片宽度的30%
+                const watermarkHeight = (watermarkWidth / watermark.width) * watermark.height;
+                const watermarkX = (width - watermarkWidth) / 2; // 水平居中放置
+                const watermarkY = height - watermarkHeight - 30; // 距离底部边缘30像素
                 
-                // 创建新的File对象
-                const compressedFile = new File(
-                  [blob],
-                  file.name, // 保持原文件名
-                  {
-                    type: file.type,
-                    lastModified: Date.now(),
+                // 设置水印透明度
+                ctx.globalAlpha = 1; // 半透明水印
+                
+                // 绘制水印
+                ctx.drawImage(watermark, watermarkX, watermarkY, watermarkWidth, watermarkHeight);
+                
+                // 恢复透明度
+                ctx.globalAlpha = 1.0;
+                
+                // 导出图片
+                exportCanvasToFile();
+              };
+              
+              // 加载水印图片出错时，仍然导出无水印图片
+              watermark.onerror = () => {
+                console.error('水印图片加载失败');
+                exportCanvasToFile();
+              };
+              
+              // 加载水印图片
+              watermark.src = '/imgs/watermark.png';
+            } else {
+              // 无需水印，直接导出
+              exportCanvasToFile();
+            }
+            
+            // 导出Canvas到File对象
+            function exportCanvasToFile() {
+              // 将canvas内容转换为Blob
+              canvas.toBlob(
+                (blob) => {
+                  if (!blob) {
+                    console.error('无法生成blob');
+                    resolve(file);
+                    return;
                   }
-                );
-                  // 打印并保存压缩信息
-                console.log(`图片压缩: ${file.name}`);
-                console.log(`压缩前: ${(file.size / 1024 / 1024).toFixed(2)}MB, ${img.width}x${img.height}`);
-                console.log(`压缩后: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB, ${width}x${height}`);
-                
-                // 更新压缩信息状态
-                setCompressionInfo({
-                  original: { size: file.size, width: img.width, height: img.height },
-                  compressed: { size: compressedFile.size, width, height }
-                });
-                
-                // 更新压缩信息状态
-                setCompressionInfo({
-                  original: { size: file.size, width: img.width, height: img.height },
-                  compressed: { size: compressedFile.size, width, height }
-                });
-                
-                resolve(compressedFile);
-              },
-              file.type,
-              imageQuality // 压缩质量
-            );
-          };
+                  
+                  // 创建新的File对象
+                  const processedFile = new File(
+                    [blob],
+                    file.name, // 保持原文件名
+                    {
+                      type: file.type,
+                      lastModified: Date.now(),
+                    }
+                  );
+                  
+                  // 打印处理信息
+                  console.log(`图片处理完成: ${file.name}`);
+                  console.log(`处理前: ${(file.size / 1024 / 1024).toFixed(2)}MB, ${img.width}x${img.height}`);
+                  console.log(`处理后: ${(processedFile.size / 1024 / 1024).toFixed(2)}MB, ${width}x${height}`);
+                  console.log(`水印: ${addWatermark ? '已添加' : '未添加'}`);
+                  
+                  // 更新处理信息状态
+                  setCompressionInfo({
+                    original: { size: file.size, width: img.width, height: img.height },
+                    compressed: { size: processedFile.size, width, height }
+                  });
+                  
+                  resolve(processedFile);
+                },
+                file.type,
+                imageQuality // 压缩质量
+              );
+            }          };
           
           img.onerror = () => {
             console.error('图片加载失败');
@@ -661,8 +698,7 @@ export default function ImageUploader({
             用逗号分隔标签（例如：自然,风景,天空）
           </p>
         </div>
-        
-        <div className="grid gap-2">
+          <div className="grid gap-2">
           <div className="flex items-center gap-2">
             <Switch
               id="compression-mode"
@@ -670,13 +706,31 @@ export default function ImageUploader({
               onCheckedChange={setEnableCompression}
             />
             <Label htmlFor="compression-mode" className="cursor-pointer">
-              图片压缩 ({maxImageWidth}x{maxImageHeight}, 质量 {Math.round(imageQuality * 100)}%)
+              上传前的图片压缩 ({maxImageWidth}x{maxImageHeight}, 质量 {Math.round(imageQuality * 100)}%)
             </Label>
           </div>
           <p className="text-xs text-muted-foreground">
-            {enableCompression 
+            {enableCompression
               ? "已启用压缩，自动调整图片尺寸和质量以减小文件大小" 
               : "未启用压缩，将上传原始图片（可能会因文件过大导致上传失败）"}
+          </p>
+        </div>
+        
+        <div className="grid gap-2">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="watermark-mode"
+              checked={addWatermark}
+              onCheckedChange={setAddWatermark}
+            />
+            <Label htmlFor="watermark-mode" className="cursor-pointer">
+              添加水印
+            </Label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {addWatermark 
+              ? "已启用水印，上传的图片将自动添加水印" 
+              : "未启用水印，上传的图片将不添加水印"}
           </p>
         </div>
         
@@ -732,10 +786,15 @@ export default function ImageUploader({
                         {(compressionInfo.compressed.size / (1024 * 1024)).toFixed(2)} MB
                       </p>
                     </div>
-                  </div>
-                  <p className="text-xs mt-2 text-muted-foreground">
+                  </div>                  <p className="text-xs mt-2 text-muted-foreground">
                     压缩比: {Math.round((1 - compressionInfo.compressed.size / compressionInfo.original.size) * 100)}%
                   </p>
+                  {addWatermark && (
+                    <p className="text-xs mt-1 text-muted-foreground flex items-center gap-1">
+                      <span className="inline-block w-2 h-2 bg-primary rounded-full"></span>
+                      已添加水印
+                    </p>
+                  )}
                 </div>
               )}
             </>

@@ -280,7 +280,7 @@ export default function AlbumsPage() {
                           alt={coverImage.alt_text || album.title}
                           fill                          priority={groupIndex === 0} /* 为第一组的图片添加priority属性，这些是LCP图片 */
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                          sizes="(max-width: 960px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           onError={(e) => handleImageError(e, coverImage.file_path)}
                         />
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
@@ -303,7 +303,7 @@ export default function AlbumsPage() {
                       fill
                       priority={groupIndex === 0} /* 为首组的图片添加priority属性 */
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"                      onError={(e) => handleImageError(e, group[4].coverImage.file_path)}
+                      sizes="(max-width: 960px) 100vw, (max-width: 1024px) 50vw, 33vw"                      onError={(e) => handleImageError(e, group[4].coverImage.file_path)}
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
                       <h3 className="text-base font-medium truncate">{group[4].title}</h3>
@@ -329,7 +329,7 @@ export default function AlbumsPage() {
                       fill
                       priority={groupIndex === 0 || groupIndex === 1} /* 为第一组和第二组的大图添加priority属性 */
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"                      onError={(e) => handleImageError(e, group[0].coverImage.file_path)}
+                      sizes="(max-width: 960px) 100vw, (max-width: 1024px) 50vw, 33vw"                      onError={(e) => handleImageError(e, group[0].coverImage.file_path)}
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
                       <h3 className="text-base font-medium truncate">{group[0].title}</h3>
@@ -352,7 +352,7 @@ export default function AlbumsPage() {
                           src={getThumbnailUrl(coverImage.file_path)}
                           alt={coverImage.alt_text || album.title}                          fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                          sizes="(max-width: 960px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           onError={(e) => handleImageError(e, coverImage.file_path)}
                         />
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">
@@ -382,7 +382,7 @@ export default function AlbumsPage() {
                         alt={coverImage.alt_text || album.title}
                         fill                        priority={groupIndex === 0 && albumIndex < 2} /* 为首组的前两张图片添加priority属性 */
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        sizes="(max-width: 960px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         onError={(e) => handleImageError(e, coverImage.file_path)}
                       />
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white">

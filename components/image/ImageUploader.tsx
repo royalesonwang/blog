@@ -291,7 +291,7 @@ export default function ImageUploader({
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Optimized for display (max 640x640px)
+                    Optimized for display (max 960x960px)
                   </p>
                 </div>
               </div>

@@ -90,7 +90,7 @@ export default function AddImagesDialog({
           </DialogTitle>
           <DialogDescription>
             上传图片到相册"{albumId}"。大尺寸图片（超过1440px）将自动调整大小，
-            并生成缩略图（最大640px）用于显示。
+            并生成缩略图（最大960px）用于显示。
           </DialogDescription>
         </DialogHeader>
         

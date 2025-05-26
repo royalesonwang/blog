@@ -264,4 +264,13 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
+
+// 设置该路由允许的最大请求体大小
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '24mb', // 设置最大上传大小为24MB
+    },
+  },
+};

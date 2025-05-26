@@ -31,6 +31,11 @@ const nextConfig = {
   async redirects() {
     return [];
   },
+  api: {
+    bodyParser: {
+      sizeLimit: '24mb', // 设置最大上传大小为24MB
+    },
+  },
 };
 
 // Make sure experimental mdx flag is enabled
