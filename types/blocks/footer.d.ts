@@ -9,4 +9,9 @@ export interface Footer {
   social?: Social;
   agreement?: Agreement;
   show_sign?: boolean;
+  show_subscribe?: boolean;
+  subscribe?: {
+    title?: string;
+    description?: string;
+  };
 }

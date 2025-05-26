@@ -13,17 +13,17 @@
     "nav": {
       "items": [
         {
-          "title": "Blog",
+          "title": "博客",
           "url": "/posts", 
           "icon": "RiQuillPenLine"
         },
         {
-          "title": "Albums",
+          "title": "相册",
           "url": "/albums",
           "icon": "RiImageLine"
         },
         {
-          "title": "About",
+          "title": "关于",
           "url": "/about",
           "icon": "RiEmotionHappyLine"
         }
@@ -35,12 +35,13 @@
   },
   "blog": {
     "name": "blog",
-    "title": "Latest Blog",
-    "description": "Latest updates and insights from our blog.",
-    "read_more_text": "Read more"
-  },  "footer": {
+    "title": "最新博客",
+    "description": "最新的博客更新和见解。",
+    "read_more_text": "阅读更多"
+  },
+  "footer": {
     "name": "footer",
-    "copyright": "© 2025 • Eson Wang All rights reserved.",
+    "copyright": "© 2025 • Eson Wang 版权所有。",
     "show_sign": true,
     "show_subscribe": true,
     "social": {
@@ -52,10 +53,10 @@
           "target": "_blank"
         },
         {
-          "title": "Email",
-          "icon": "RiMailLine",
-          "url": "mailto:esonwang@outlook.com",
-          "target": "_self"
+          "title": "GitHub",
+          "icon": "RiGithubFill",
+          "url": "https://github.com/esonwang",
+          "target": "_blank"
         }
       ]
     }

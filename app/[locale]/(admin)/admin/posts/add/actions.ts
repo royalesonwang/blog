@@ -4,6 +4,7 @@ import { PostStatus, findPostBySlug, insertPost } from "@/models/post";
 import { Post } from "@/types/post";
 import { getIsoTimestr } from "@/lib/time";
 import { getUuid } from "@/lib/hash";
+import { sendPostNotifications } from "@/services/notification";
 
 export async function addPost(formData: FormData, passby?: any) {
   const title = formData.get("title") as string;
@@ -52,6 +53,19 @@ export async function addPost(formData: FormData, passby?: any) {
 
   try {
     await insertPost(post);
+    
+    // 只有当文章状态为"在线"时才发送通知
+    if (status === PostStatus.Online) {
+      try {
+        console.log(`准备发送新文章 "${title}" (${type}) 的通知...`);
+        // 发送新文章发布通知
+        const notificationResult = await sendPostNotifications(post, false);
+        console.log('新文章通知结果:', notificationResult);
+      } catch (notifyError) {
+        // 通知发送失败不应阻止文章的正常创建
+        console.error('发送新文章通知失败:', notifyError);
+      }
+    }
 
     return {
       status: "success" as const,

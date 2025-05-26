@@ -89,11 +89,11 @@ export default async function ({
         title: "Type",
         type: "select",
         options: [
-          { title: "Life", value: "life" },
-          { title: "Academic", value: "academic" },
-          { title: "Technology", value: "technology" }
+          { title: "Life", value: "Life" },
+          { title: "Academic", value: "Academic" },
+          { title: "Knowledge", value: "Knowledge" }
         ],
-        value: "technology",
+        value: "Knowledge",
         validation: {
           required: true,
         },

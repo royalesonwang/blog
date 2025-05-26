@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "EsonWang's Blog",
-    "description": "Articles, Technology, Life",
+    "description": "Articles, Knowledge, Life",
     "keywords": "EsonWang, Blog"
   },
   "user": {
@@ -117,5 +117,39 @@
   "about": {
     "title": "About",
     "description": "About Eson Wang"
+  },
+  "subscribe": {
+    "title": "Subscribe Me",
+    "description": "Get the latest updates delivered to your inbox",
+    "name_placeholder": "Your Name",
+    "email_placeholder": "Your Email",
+    "content_label": "Subscribe content:",
+    "knowledge": "Knowledge",
+    "life": "Life", 
+    "academic": "Academic",
+    "album": "Album",
+    "subscribe_button": "Subscribe",
+    "subscribing": "Subscribing...",
+    "success_message": "Successfully subscribed! An email has been sent to your inbox.",
+    "already_subscribed": "You're already subscribed with this email.",
+    "error_message": "Failed to subscribe. Please try again.",
+    "email_required": "Email is required",
+    "name_required": "Name is required",
+    "content_required": "Please select at least one content type",
+    "invalid_email": "Please enter a valid email address"
+  },
+  "unsubscribe": {
+    "processing": "Processing your request...",
+    "success_title": "Unsubscribed Successfully",
+    "success_message": "You have successfully unsubscribed.",
+    "success_description": "We're sorry to see you go, but we understand your decision. You're always welcome back if you change your mind!",
+    "error_title": "Unsubscribe Failed",
+    "error_missing_email": "Missing email parameter",
+    "error_missing_uuid": "Invalid unsubscribe link",
+    "error_network": "Network error, please try again later",
+    "error_unknown": "Unknown error",
+    "back_home": "Back to Home",
+    "resubscribe": "Resubscribe",
+    "retry": "Retry"
   }
 }

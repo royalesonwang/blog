@@ -117,5 +117,39 @@
   "about": {
     "title": "关于",
     "description": "关于Eson Wang"
+  },
+  "subscribe": {
+    "title": "订阅邮件",
+    "description": "获取最新更新推送到您的邮箱",
+    "name_placeholder": "您的姓名",
+    "email_placeholder": "您的邮箱地址",
+    "content_label": "选择内容类型：",
+    "knowledge": "知识",
+    "life": "生活", 
+    "academic": "学术",
+    "album": "相册",
+    "subscribe_button": "订阅",
+    "subscribing": "订阅中...",
+    "success_message": "订阅成功！一封邮件已发送到您的邮箱。",
+    "already_subscribed": "您已经用此邮箱订阅过了",
+    "error_message": "订阅失败，请重试",
+    "email_required": "邮箱地址必填",
+    "name_required": "姓名必填",
+    "content_required": "请至少选择一种内容类型",
+    "invalid_email": "请输入有效的邮箱地址"
+  },
+  "unsubscribe": {
+    "processing": "正在处理您的请求...",
+    "success_title": "取消订阅成功",
+    "success_message": "您已成功取消订阅。",
+    "success_description": "我们很遗憾看到您离开，但我们理解您的决定。如果您将来想要重新订阅，随时欢迎回来！",
+    "error_title": "取消订阅失败",
+    "error_missing_email": "缺少邮箱参数",
+    "error_missing_uuid": "无效的取消订阅链接",
+    "error_network": "网络错误，请稍后再试",
+    "error_unknown": "未知错误",
+    "back_home": "返回主页",
+    "resubscribe": "重新订阅",
+    "retry": "重试"
   }
 }
