@@ -6,6 +6,7 @@ import { FileImage, CheckCircle2, Copy, X, ImageIcon, UploadIcon } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 // 从本地导入 ProgressCircle 组件
 import { ProgressCircle } from "./ProgressCircle";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,10 @@ interface ImageUploaderProps {
   maxFiles?: number;
   targetTable?: string; // 指定上传目标表，例如'album_image'
   albumId?: string | null; // 如果上传到相册，指定相册ID
+  compressImages?: boolean; // 是否压缩图片
+  maxImageWidth?: number; // 压缩后的最大宽度
+  maxImageHeight?: number; // 压缩后的最大高度
+  imageQuality?: number; // 压缩质量(0-1)
 }
 
 export default function ImageUploader({
@@ -54,12 +59,21 @@ export default function ImageUploader({
   maxFiles = 10,
   targetTable = "image_uploads",
   albumId,
+  compressImages = true, // 默认启用压缩
+  maxImageWidth = 1440, // 与后端一致
+  maxImageHeight = 1440, // 与后端一致
+  imageQuality = 1, // 默认质量100%
 }: ImageUploaderProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
-  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);  const [description, setDescription] = useState("");
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const [compressionInfo, setCompressionInfo] = useState<{
+    original: { size: number, width: number, height: number },
+    compressed: { size: number, width: number, height: number }
+  } | null>(null);
+  const [description, setDescription] = useState("");
   const [altText, setAltText] = useState("");
   const [tags, setTags] = useState("");
   const [device, setDevice] = useState("");
@@ -67,6 +81,8 @@ export default function ImageUploader({
   const [selectedFolder, setSelectedFolder] = useState(defaultFolder);
   const [previewUrls, setPreviewUrls] = useState<{[key: string]: string}>({});
   const [selectedPreviewIndex, setSelectedPreviewIndex] = useState<number | null>(null);
+  // 添加一个状态来控制是否启用压缩
+  const [enableCompression, setEnableCompression] = useState<boolean>(compressImages);
 
   // 清理函数，组件卸载时释放创建的预览URL
   useEffect(() => {
@@ -266,7 +282,6 @@ export default function ImageUploader({
       return null;
     }
   };
-
   const handleUpload = async () => {
     if (files.length === 0) {
       toast.error("请选择要上传的图片");
@@ -280,7 +295,10 @@ export default function ImageUploader({
       
       // 按顺序上传所有文件
       for (let i = 0; i < files.length; i++) {
-        const result = await uploadSingleFile(files[i], i);
+        // 先压缩图片
+        const compressedFile = await compressImage(files[i]);
+        // 上传压缩后的文件
+        const result = await uploadSingleFile(compressedFile, i);
         if (result) {
           results.push(result);
         }
@@ -362,6 +380,126 @@ export default function ImageUploader({
     }
     if (onFileSelected) {
       onFileSelected(false);
+    }
+  };
+  // 图片压缩函数
+  const compressImage = async (file: File): Promise<File> => {
+    // 如果用户禁用了压缩或文件不是图片类型或是GIF格式(GIF不适合用canvas压缩)，直接返回原文件
+    if (!enableCompression || !file.type.startsWith('image/') || file.type === 'image/gif') {
+      return file;
+    }
+
+    try {
+      // 创建一个FileReader读取文件
+      const reader = new FileReader();
+      
+      // 将文件读取为Data URL
+      return new Promise((resolve, reject) => {
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            // 获取原始尺寸
+            let width = img.width;
+            let height = img.height;
+            
+            // 检查是否需要调整大小
+            if (width <= maxImageWidth && height <= maxImageHeight && file.size < 1024 * 1024) {
+              // 如果文件小于1MB且尺寸不超过限制，则不压缩
+              resolve(file);
+              return;
+            }
+            
+            // 维持宽高比例的情况下调整尺寸
+            if (width > maxImageWidth) {
+              const ratio = maxImageWidth / width;
+              width = maxImageWidth;
+              height = Math.round(height * ratio);
+            }
+            
+            if (height > maxImageHeight) {
+              const ratio = maxImageHeight / height;
+              height = maxImageHeight;
+              width = Math.round(width * ratio);
+            }
+            
+            // 创建canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            
+            // 在canvas上绘制调整大小后的图像
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              console.error('无法创建canvas上下文');
+              resolve(file); // 失败时返回原始文件
+              return;
+            }
+            
+            // 绘制图片
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // 将canvas内容转换为Blob
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  console.error('无法生成blob');
+                  resolve(file);
+                  return;
+                }
+                
+                // 创建新的File对象
+                const compressedFile = new File(
+                  [blob],
+                  file.name, // 保持原文件名
+                  {
+                    type: file.type,
+                    lastModified: Date.now(),
+                  }
+                );
+                  // 打印并保存压缩信息
+                console.log(`图片压缩: ${file.name}`);
+                console.log(`压缩前: ${(file.size / 1024 / 1024).toFixed(2)}MB, ${img.width}x${img.height}`);
+                console.log(`压缩后: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB, ${width}x${height}`);
+                
+                // 更新压缩信息状态
+                setCompressionInfo({
+                  original: { size: file.size, width: img.width, height: img.height },
+                  compressed: { size: compressedFile.size, width, height }
+                });
+                
+                // 更新压缩信息状态
+                setCompressionInfo({
+                  original: { size: file.size, width: img.width, height: img.height },
+                  compressed: { size: compressedFile.size, width, height }
+                });
+                
+                resolve(compressedFile);
+              },
+              file.type,
+              imageQuality // 压缩质量
+            );
+          };
+          
+          img.onerror = () => {
+            console.error('图片加载失败');
+            resolve(file); // 失败时返回原始文件
+          };
+          
+          // 设置图片源
+          img.src = event.target?.result as string;
+        };
+        
+        reader.onerror = () => {
+          console.error('读取文件失败');
+          resolve(file); // 失败时返回原始文件
+        };
+        
+        // 开始读取文件
+        reader.readAsDataURL(file);
+      });
+    } catch (error) {
+      console.error('压缩图片时出错:', error);
+      return file; // 出错时返回原始文件
     }
   };
 
@@ -524,6 +662,24 @@ export default function ImageUploader({
           </p>
         </div>
         
+        <div className="grid gap-2">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="compression-mode"
+              checked={enableCompression}
+              onCheckedChange={setEnableCompression}
+            />
+            <Label htmlFor="compression-mode" className="cursor-pointer">
+              图片压缩 ({maxImageWidth}x{maxImageHeight}, 质量 {Math.round(imageQuality * 100)}%)
+            </Label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {enableCompression 
+              ? "已启用压缩，自动调整图片尺寸和质量以减小文件大小" 
+              : "未启用压缩，将上传原始图片（可能会因文件过大导致上传失败）"}
+          </p>
+        </div>
+        
         <div className="flex gap-2">
           <Button 
             onClick={handleUpload} 
@@ -545,18 +701,44 @@ export default function ImageUploader({
           )}
         </div>
       </div>
-        
-      {showPreview && (
+          {showPreview && (
         <div className="space-y-4">
           {/* 只有当有预览但没上传成功时显示预览图 */}
           {selectedPreviewIndex !== null && files.length > 0 && (
-            <div className={`flex items-center justify-center ${previewHeight} bg-muted rounded-md mb-4`}>
-              <img
-                src={previewUrls[`file-${selectedPreviewIndex}`]}
-                alt="预览"
-                className="max-h-full max-w-full object-contain"
-              />
-            </div>
+            <>
+              <div className={`flex items-center justify-center ${previewHeight} bg-muted rounded-md mb-4`}>
+                <img
+                  src={previewUrls[`file-${selectedPreviewIndex}`]}
+                  alt="预览"
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+              {/* 显示压缩信息 */}
+              {enableCompression && compressionInfo && (
+                <div className="text-sm p-3 bg-muted/50 rounded-md">
+                  <h4 className="font-medium mb-1">图片压缩信息</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">原始尺寸</p>
+                      <p>
+                        {compressionInfo.original.width} x {compressionInfo.original.height} 像素，
+                        {(compressionInfo.original.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">压缩后</p>
+                      <p>
+                        {compressionInfo.compressed.width} x {compressionInfo.compressed.height} 像素，
+                        {(compressionInfo.compressed.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs mt-2 text-muted-foreground">
+                    压缩比: {Math.round((1 - compressionInfo.compressed.size / compressionInfo.original.size) * 100)}%
+                  </p>
+                </div>
+              )}
+            </>
           )}
           
           {/* 上传成功后显示成功信息 */}
