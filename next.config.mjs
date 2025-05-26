@@ -33,8 +33,12 @@ const nextConfig = {
   },
   api: {
     bodyParser: {
-      sizeLimit: '24mb', // 设置最大上传大小为24MB
+      sizeLimit: '24mb', // 增加到24MB
     },
+    responseLimit: '24mb',
+  },
+  serverActions: {
+    bodySizeLimit: '24mb',
   },
 };
 
