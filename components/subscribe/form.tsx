@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 interface SubscribeFormProps {
   className?: string;
@@ -28,6 +29,8 @@ export default function SubscribeForm({ className = "" }: SubscribeFormProps) {
   const [name, setName] = useState("");
   const [selectedContent, setSelectedContent] = useState<string[]>(["Knowledge", "Life", "Academic", "Album"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
+  const turnstileRef = useRef<any>(null);
 
   // 如果用户已登录，自动填入邮箱
   useEffect(() => {
@@ -46,7 +49,6 @@ export default function SubscribeForm({ className = "" }: SubscribeFormProps) {
       setSelectedContent(prev => prev.filter(item => item !== value));
     }
   };
-
   const validateForm = () => {
     if (!email.trim()) {
       toast.error(t("email_required"));
@@ -68,6 +70,10 @@ export default function SubscribeForm({ className = "" }: SubscribeFormProps) {
       toast.error(t("invalid_email"));
       return false;
     }
+      if (!turnstileToken) {
+      toast.error(t("captcha_required"));
+      return false;
+    }
     
     return true;
   };
@@ -86,29 +92,42 @@ export default function SubscribeForm({ className = "" }: SubscribeFormProps) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+        },        body: JSON.stringify({
           name: name.trim(),
           email: email.trim(),
           content: selectedContent,
+          turnstileToken: turnstileToken,
         }),
       });
 
       const result = await response.json();      if (result.success) {
         // 新订阅或重新激活的订阅都当作成功处理
-        toast.success(t("success_message"));
-        // 重置表单
+        toast.success(t("success_message"));        // 重置表单
         if (!session?.user?.email) {
           setEmail("");
           setName("");
         }
         setSelectedContent(["Knowledge", "Life", "Academic", "Album"]);
-      } else {
+        setTurnstileToken("");
+        // 重置 Turnstile
+        if (turnstileRef.current) {
+          turnstileRef.current.reset();
+        }      } else {
         toast.error(result.message || t("error_message"));
+        // 重置 Turnstile 以允许重试
+        setTurnstileToken("");
+        if (turnstileRef.current) {
+          turnstileRef.current.reset();
+        }
       }
     } catch (error) {
       console.error("Subscribe error:", error);
       toast.error(t("error_message"));
+      // 重置 Turnstile 以允许重试
+      setTurnstileToken("");
+      if (turnstileRef.current) {
+        turnstileRef.current.reset();
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -179,13 +198,26 @@ export default function SubscribeForm({ className = "" }: SubscribeFormProps) {
           </div>          <div className="flex-shrink-0 self-center">
             <Button 
               type="submit" 
-              disabled={isSubmitting || selectedContent.length === 0}
+              disabled={isSubmitting || selectedContent.length === 0 || !turnstileToken}
               className="h-8 text-sm px-6"
               size="sm"
             >
               {isSubmitting ? t("subscribing") : t("subscribe_button")}
             </Button>
           </div>
+        </div>        {/* Turnstile for desktop */}
+        <div className="hidden lg:flex justify-center">
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+            onSuccess={(token) => setTurnstileToken(token)}
+            onError={() => setTurnstileToken("")}
+            onExpire={() => setTurnstileToken("")}
+            options={{
+              theme: "auto",
+              size: "normal"
+            }}
+          />
         </div>
 
         {/* Mobile layout: stacked */}
@@ -243,12 +275,25 @@ export default function SubscribeForm({ className = "" }: SubscribeFormProps) {
                   </Label>
                 </div>
               ))}
-            </div>
+            </div>          </div>
+
+          {/* Turnstile for mobile */}
+          <div className="flex justify-center">
+            <Turnstile
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+              onSuccess={(token) => setTurnstileToken(token)}
+              onError={() => setTurnstileToken("")}
+              onExpire={() => setTurnstileToken("")}
+              options={{
+                theme: "auto",
+                size: "compact"
+              }}
+            />
           </div>
 
           <Button 
             type="submit" 
-            disabled={isSubmitting || selectedContent.length === 0}
+            disabled={isSubmitting || selectedContent.length === 0 || !turnstileToken}
             className="w-full h-8 text-sm"
             size="sm"
           >

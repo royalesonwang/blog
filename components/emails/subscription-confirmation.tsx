@@ -16,9 +16,7 @@ export const generateSubscriptionTextEmail = (props: SubscriptionConfirmationEma
     'Life': '• 生活感悟', 
     'Academic': '• 学术研究',
     'Album': '• 摄影作品'
-  };
-
-  return `
+  };  return `
 感谢您订阅 Eson Wang 的博客！
 
 您好，${name}！
@@ -27,6 +25,8 @@ export const generateSubscriptionTextEmail = (props: SubscriptionConfirmationEma
 ${content.map(item => contentLabels[item] || `• ${item}`).join('\n')}
 
 我们会定期向您发送精选内容。
+
+博客主页：${process.env.NEXT_PUBLIC_WEB_URL}
 
 取消订阅：${unsubscribeUrl}
 
@@ -66,9 +66,9 @@ export const SubscriptionConfirmationEmail: React.FC<SubscriptionConfirmationEma
             <ul style={{ listStyleType: 'none', padding: '0', margin: '0' }}>
               {content.map((item, index) => {
                 const contentLabels: { [key: string]: string } = {
-                  'Knowledge': '🔧 知识分享',
+                  'Knowledge': '📚 知识分享',
                   'Life': '🌟 生活感悟',
-                  'Academic': '📚 学术研究',
+                  'Academic': '🧪 学术研究',
                   'Album': '📸 相册分享'
                 };
                 
@@ -86,12 +86,10 @@ export const SubscriptionConfirmationEmail: React.FC<SubscriptionConfirmationEma
                 );
               })}
             </ul>
-          </div>
-
-          <p style={{ color: '#64748b' }}>
+          </div>          <p style={{ color: '#64748b' }}>
             我们会定期向您发送精选内容，请持续关注。
           </p>
-          <p>主页链接：<a href={unsubscribeUrl} style={{ color: '#dc2626', textDecoration: 'none', fontSize: '14px'}}>https://eson.wang</a></p>
+          <p>主页链接：<a href={process.env.NEXT_PUBLIC_WEB_URL} style={{ color: '#3b82f6', textDecoration: 'none', fontSize: '14px'}}>{process.env.NEXT_PUBLIC_WEB_URL}</a></p>
         </div>
 
         {/* Footer */}

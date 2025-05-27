@@ -20,7 +20,7 @@ export const generatePostUpdatedTextEmail = (props: PostUpdatedEmailProps): stri
 
 亲爱的 ${name || '读者'},
 
-Eson Wang 的博客刚刚更新了一篇${getTypeDisplay(postType)}文章，我们认为您可能会感兴趣查看最新内容：
+Eson Wang 的博客刚刚更新了一篇{getTypeDisplay(postType)}类型的文章，请查收。
 
 ${postTitle}
 
@@ -74,7 +74,7 @@ export const PostUpdatedEmail: React.FC<PostUpdatedEmailProps> = ({
           <h2 style={{ color: '#1e293b', marginTop: '0', fontSize: '18px' }}>亲爱的 {name || '读者'}，</h2>
           
           <p style={{ marginBottom: '20px' }}>
-            Eson Wang 的博客刚刚更新了一篇{getTypeDisplay(postType)}文章，我们认为您可能会感兴趣查看最新内容：
+            Eson Wang 的博客刚刚更新了一篇{getTypeDisplay(postType)}类型的文章，请查收。
           </p>
 
           <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>

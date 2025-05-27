@@ -3,6 +3,7 @@ import { insertSubscribe, findSubscribeByEmail, updateSubscribeContent, getAllSu
 import { respData, respErr } from "@/lib/resp";
 import { getUserInfo } from "@/services/user";
 import { sendSubscriptionConfirmationEmail, sendAdminNotificationEmail } from "@/lib/email";
+import { verifyTurnstileToken, getClientIP } from "@/lib/turnstile";
 
 // 生成UUID的辅助函数
 function generateUUID(): string {
@@ -14,7 +15,26 @@ function generateUUID(): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, content } = await request.json();
+    const { name, email, content, turnstileToken } = await request.json();
+
+    // 验证 Turnstile token
+    if (!turnstileToken) {
+      return NextResponse.json(
+        { success: false, message: "人机验证失败，请重试" },
+        { status: 400 }
+      );
+    }
+
+    const clientIP = getClientIP(request);
+    const turnstileResult = await verifyTurnstileToken(turnstileToken, clientIP);
+    
+    if (!turnstileResult.success) {
+      console.error("Turnstile verification failed:", turnstileResult['error-codes']);
+      return NextResponse.json(
+        { success: false, message: "人机验证失败，请重试" },
+        { status: 400 }
+      );
+    }
 
     // 验证必需字段
     if (!email || !content || !Array.isArray(content) || content.length === 0) {
