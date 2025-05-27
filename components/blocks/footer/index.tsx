@@ -55,10 +55,10 @@ export default function Footer({ footer }: { footer: FooterType }) {
                 )}
                 {footer.show_sign && <SignToggle />}
               </div>
-            </div>            {/* 桌面端：单行布局 (50%-30%-20%) */}
+            </div>            {/* 桌面端：单行布局 (40%-40%-20%) */}
             <div className="hidden lg:grid lg:grid-cols-10 lg:items-center">
-              {/* 左侧：版权信息 (50%) */}
-              <div className="col-span-5">
+              {/* 左侧：版权信息 (40%) */}
+              <div className="col-span-4">
                 {footer.copyright && (
                   <p className="text-left text-sm font-medium text-muted-foreground">
                     {footer.copyright}
@@ -75,8 +75,8 @@ export default function Footer({ footer }: { footer: FooterType }) {
                 )}
               </div>
 
-              {/* 中间：订阅表单 (30%) */}
-              <div className="col-span-3 px-4">
+              {/* 中间：订阅表单 (40%) */}
+              <div className="col-span-4 px-4">
                 {footer.show_subscribe && (
                   <div className="mx-auto">
                     <FooterSubscribeForm />
