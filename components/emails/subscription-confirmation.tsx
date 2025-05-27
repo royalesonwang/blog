@@ -10,13 +10,14 @@ interface SubscriptionConfirmationEmailProps {
 // 生成纯文本版本的函数
 export const generateSubscriptionTextEmail = (props: SubscriptionConfirmationEmailProps): string => {
   const { name, email, content, unsubscribeUrl } = props;
-  
-  const contentLabels: { [key: string]: string } = {
+    const contentLabels: { [key: string]: string } = {
     'Knowledge': '• 知识分享',
     'Life': '• 生活感悟', 
     'Academic': '• 学术研究',
     'Album': '• 摄影作品'
-  };  return `
+  };
+  
+  return `
 感谢您订阅 Eson Wang 的博客！
 
 您好，${name}！

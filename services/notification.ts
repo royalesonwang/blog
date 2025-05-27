@@ -49,12 +49,17 @@ export async function sendPostNotifications(post: Post, isUpdate: boolean = fals
     const baseUrl = process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000';
     // 使用正确的文章路径 /posts/
     const postUrl = `${baseUrl}/posts/${post.slug || post.uuid}`;
-    
-    // 处理封面图片URL，确保它是完整的URL
+      // 处理封面图片URL，确保它是完整的URL
     let fullCoverUrl = post.cover_url;
     if (fullCoverUrl && !fullCoverUrl.startsWith('http')) {
-      // 如果封面URL不是以http开头，添加baseUrl前缀
-      fullCoverUrl = `${baseUrl}${fullCoverUrl.startsWith('/') ? '' : '/'}${fullCoverUrl}`;
+      // 如果封面URL不是以http开头，使用R2_DOMAIN进行处理
+      const r2Domain = process.env.NEXT_PUBLIC_R2_DOMAIN || 'https://storage.eson.wang';
+      // 确保域名没有尾随斜杠
+      const cleanDomain = r2Domain.endsWith('/') ? r2Domain.slice(0, -1) : r2Domain;
+      // 清理封面URL路径开头的斜杠
+      const cleanPath = fullCoverUrl.startsWith('/') ? fullCoverUrl.substring(1) : fullCoverUrl;
+      // 构造正确的URL
+      fullCoverUrl = `${cleanDomain}/${process.env.NEXT_PUBLIC_THUMBNAIL_FOLDER}/${cleanPath}`;
     }
     
     // 获取订阅了该类型内容的活跃用户

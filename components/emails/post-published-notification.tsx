@@ -71,10 +71,8 @@ export const PostPublishedEmail: React.FC<PostPublishedEmailProps> = ({
 
         {/* Main Content */}
         <div style={{ backgroundColor: '#ffffff', padding: '25px', borderRadius: '0 0 8px 8px', marginBottom: '25px' }}>
-          <h2 style={{ color: '#1e293b', marginTop: '0', fontSize: '18px' }}>亲爱的 {name || '读者'}，</h2>
-          
-          <p style={{ marginBottom: '20px' }}>
-            Eson Wang 的博客刚刚发布了一篇{getTypeDisplay(postType)}类型的文章，请查收。
+          <h2 style={{ color: '#1e293b', marginTop: '0', fontSize: '18px' }}>亲爱的 {name || '读者'}，</h2>          <p style={{ marginBottom: '20px' }}>
+            Eson Wang 的博客刚刚发布了一篇<span>{getTypeDisplay(postType)}</span>类型的文章，请查收。
           </p>
 
           <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8fafc', borderRadius: '6px' }}>
