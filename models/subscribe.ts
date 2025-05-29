@@ -149,6 +149,44 @@ export async function getAllSubscribes(
 }
 
 /**
+ * 获取所有订阅用户（包括所有状态）- 用于管理界面
+ * @param page 页码
+ * @param limit 每页数量
+ * @returns 订阅用户列表
+ */
+export async function getAllSubscribesForAdmin(
+  page: number = 1,
+  limit: number = 100
+): Promise<Subscribe[]> {
+  if (page < 1) page = 1;
+  if (limit <= 0) limit = 100;
+
+  const offset = (page - 1) * limit;
+
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("subscribe")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    console.error("Error fetching all subscribes for admin:", error);
+    return [];
+  }
+
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  // 将content字符串转换为数组
+  return data.map(item => ({
+    ...item,
+    content: item.content ? item.content.split(',') : []
+  }));
+}
+
+/**
  * 根据文章类型获取已订阅该类型的活跃用户
  * @param contentType 文章类型
  * @returns 订阅用户列表
@@ -253,4 +291,77 @@ export async function hasPendingSubscription(email: string): Promise<boolean> {
     .single();
 
   return !error && data !== null;
+}
+
+/**
+ * 获取订阅统计信息
+ * @returns 订阅统计数据
+ */
+export async function getSubscriptionStats(): Promise<{
+  total: number;
+  active: number;
+  pending: number;
+  inactive: number;
+  byContent: Record<string, number>;
+  byPlan: Record<string, number>;
+  recentSubscriptions: number; // 最近7天的订阅数
+}> {
+  const supabase = getSupabaseClient();
+  
+  // 获取总数和各状态统计
+  const { data: allSubscribes, error } = await supabase
+    .from("subscribe")
+    .select("status, content, plan, created_at");
+
+  if (error || !allSubscribes) {
+    console.error("Error fetching subscription stats:", error);
+    return {
+      total: 0,
+      active: 0,
+      pending: 0,
+      inactive: 0,
+      byContent: {},
+      byPlan: {},
+      recentSubscriptions: 0
+    };
+  }
+
+  const stats = {
+    total: allSubscribes.length,
+    active: 0,
+    pending: 0,
+    inactive: 0,
+    byContent: {} as Record<string, number>,
+    byPlan: {} as Record<string, number>,
+    recentSubscriptions: 0
+  };
+
+  // 计算最近7天的时间戳
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  allSubscribes.forEach(subscribe => {
+    // 状态统计
+    if (subscribe.status === SubscribeStatus.Active) stats.active++;
+    else if (subscribe.status === SubscribeStatus.Pending) stats.pending++;
+    else if (subscribe.status === SubscribeStatus.Inactive) stats.inactive++;    // 内容类型统计
+    if (subscribe.content) {
+      const contentArray = subscribe.content.split(',');
+      contentArray.forEach((content: string) => {
+        const trimmedContent = content.trim();
+        stats.byContent[trimmedContent] = (stats.byContent[trimmedContent] || 0) + 1;
+      });
+    }
+
+    // 计划统计
+    const plan = subscribe.plan || 'free';
+    stats.byPlan[plan] = (stats.byPlan[plan] || 0) + 1;
+
+    // 最近7天订阅统计
+    if (new Date(subscribe.created_at) > sevenDaysAgo) {
+      stats.recentSubscriptions++;
+    }
+  });
+
+  return stats;
 }

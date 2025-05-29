@@ -43,8 +43,7 @@ export default async function AdminLayout({
           title: "Users",
           url: "/admin/users",
           icon: "RiUserLine",
-        },
-        {
+        },        {
           title: "Orders",
           icon: "RiOrderPlayLine",
           is_expand: true,
@@ -54,6 +53,15 @@ export default async function AdminLayout({
               url: "/admin/paid-orders",
             },
           ],
+        },        {
+          title: "Subscriptions",
+          url: "/admin/subscriptions",
+          icon: "RiNotificationLine",
+        },
+        {
+          title: "Analytics",
+          url: "/admin/analytics",
+          icon: "RiBarChartLine",
         },
         {
           title: "Posts",

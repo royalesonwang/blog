@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
           content: subscription.content,
           uuid: newUUID
         });
-        console.log("Confirmation email sent after activation");
       } catch (emailError) {
         console.error("Failed to send confirmation email:", emailError);
         // 确认邮件发送失败不影响激活成功
@@ -90,7 +89,6 @@ export async function GET(request: NextRequest) {
           content: subscription.content,
           uuid: newUUID
         });
-        console.log("Confirmation email sent after activation");
       } catch (emailError) {
         console.error("Failed to send confirmation email:", emailError);
         // 确认邮件发送失败不影响激活成功
