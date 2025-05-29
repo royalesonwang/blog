@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import MultiImageUploader from "@/components/image/MultiImageUploader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { getImageUrl, getThumbnailUrl } from "@/lib/url";
+import { formatExposureTime, formatFNumber, formatFocalLength } from "@/lib/exif-parser";
 
 interface ImageUploadDialogProps {
   open: boolean;
@@ -35,8 +36,7 @@ export default function ImageUploadDialog({
   const [fileName, setFileName] = useState<string | null>(null);
   const [altText, setAltText] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [hasFileSelected, setHasFileSelected] = useState<boolean>(false);
-  const [uploadedImages, setUploadedImages] = useState<Array<{
+  const [hasFileSelected, setHasFileSelected] = useState<boolean>(false);  const [uploadedImages, setUploadedImages] = useState<Array<{
     id: string;
     file_path: string;
     fileName: string | null;
@@ -44,6 +44,12 @@ export default function ImageUploadDialog({
     size: number;
     width: number;
     height: number;
+    exif_iso?: number | null;
+    exif_exposure_time?: number | null;
+    exif_f_number?: number | null;
+    exif_focal_length?: number | null;
+    device?: string | null;
+    location?: string | null;
   }>>([]);
 
   const handleInternalImageUploaded = (
@@ -55,7 +61,6 @@ export default function ImageUploadDialog({
     setFileName(fileNamePath);
     setAltText(alt);
   };
-
   const handleImagesUploaded = (images: Array<{
     id: string;
     file_path: string;
@@ -64,6 +69,12 @@ export default function ImageUploadDialog({
     size: number;
     width: number;
     height: number;
+    exif_iso?: number | null;
+    exif_exposure_time?: number | null;
+    exif_f_number?: number | null;
+    exif_focal_length?: number | null;
+    device?: string | null;
+    location?: string | null;
   }>) => {
     setUploadedImages(images);
     
@@ -126,13 +137,11 @@ export default function ImageUploadDialog({
               <CardDescription>
                 选择要上传到Cloudflare R2的图片文件。
               </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-3">
+            </CardHeader>            <CardContent className="pt-3">
               <MultiImageUploader 
                 defaultFolder={defaultFolder}
                 onImageUploaded={handleInternalImageUploaded}
                 onImagesUploaded={handleImagesUploaded}
-                showPreview={false}
                 previewHeight="h-64"
                 showFileInfo={true}
                 onPreviewChange={(url) => setPreviewUrl(url)}
@@ -197,16 +206,68 @@ export default function ImageUploadDialog({
                       </Button>
                     ))}
                   </div>
-                  
-                  {uploadedFilePath && (
+                    {uploadedFilePath && (
                     <div className="mt-4 border-t pt-4">
                       <h4 className="text-sm font-medium mb-2">选中的图片</h4>
                       {fileName && (
-                        <div>
+                        <div className="mb-3">
                           <Label>文件路径:</Label>
                           <div className="mt-1 text-sm text-muted-foreground">{fileName}</div>
                         </div>
                       )}
+                        {/* 显示EXIF信息 */}
+                      {(() => {
+                        const selectedImage = uploadedImages.find(img => img.file_path === uploadedFilePath);
+                        if (selectedImage) {
+                          return (
+                            <div className="mb-3 p-3 bg-muted/30 rounded-md">
+                              <h5 className="text-sm font-medium mb-2">图片信息</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {/* 相机参数 - 总是显示，没有数据时显示"无" */}
+                                <div className="space-y-1">
+                                  <h6 className="text-xs font-medium text-muted-foreground mb-1">相机参数</h6>
+                                  <div className="flex justify-between text-xs">
+                                    <span>ISO:</span>
+                                    <span className="font-mono">{selectedImage.exif_iso || "无"}</span>
+                                  </div>
+                                  <div className="flex justify-between text-xs">
+                                    <span>快门速度:</span>
+                                    <span className="font-mono">{selectedImage.exif_exposure_time ? formatExposureTime(selectedImage.exif_exposure_time) : "无"}</span>
+                                  </div>
+                                  <div className="flex justify-between text-xs">
+                                    <span>光圈:</span>
+                                    <span className="font-mono">{selectedImage.exif_f_number ? formatFNumber(selectedImage.exif_f_number) : "无"}</span>
+                                  </div>
+                                  <div className="flex justify-between text-xs">
+                                    <span>焦距:</span>
+                                    <span className="font-mono">{selectedImage.exif_focal_length ? formatFocalLength(selectedImage.exif_focal_length) : "无"}</span>
+                                  </div>
+                                </div>
+                                
+                                {/* 设备和位置信息 - 只在有数据时显示 */}
+                                {(selectedImage.device || selectedImage.location) && (
+                                  <div className="space-y-1">
+                                    <h6 className="text-xs font-medium text-muted-foreground mb-1">设备信息</h6>
+                                    {selectedImage.device && (
+                                      <div className="flex justify-between text-xs">
+                                        <span>设备:</span>
+                                        <span className="truncate ml-2">{selectedImage.device}</span>
+                                      </div>
+                                    )}
+                                    {selectedImage.location && (
+                                      <div className="flex justify-between text-xs">
+                                        <span>位置:</span>
+                                        <span className="truncate ml-2">{selectedImage.location}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                       
                       <div className="mt-2 flex justify-center">
                         <Button 

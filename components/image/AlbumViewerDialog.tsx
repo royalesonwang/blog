@@ -17,6 +17,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { getImageUrl, getThumbnailUrl } from "@/lib/url";
+import { formatExposureTime, formatFNumber, formatFocalLength } from "@/lib/exif-parser";
 
 // 动画相关常量
 const TRANSITION_DURATION = 500; // ms
@@ -70,6 +71,10 @@ interface AlbumImage {
   updated_at: string;
   device?: string;
   location?: string;
+  exif_iso?: number | null; // ISO值
+  exif_exposure_time?: number | null; // 快门速度
+  exif_f_number?: number | null; // 光圈值
+  exif_focal_length?: number | null; // 焦距
 }
 
 interface AlbumViewerDialogProps {
@@ -593,13 +598,29 @@ export default function AlbumViewerDialog({
             className="w-full bg-gradient-to-b from-black/70 to-transparent pt-6 pb-16 px-6"
           >            <h3 className="text-lg font-medium text-white">{albumTitle}</h3>
             {currentImage && (
-              <div className="mt-1 text-sm text-white/80">
-                {formatDate(currentImage.created_at)}
-                {currentImage.device && (
-                  <span> · Shot on {currentImage.device}</span>
-                )}
-                {currentImage.location && (
-                  <span> · 📍 {currentImage.location}</span>
+              <div className="mt-1 space-y-1">
+                <div className="text-sm text-white/80">
+                  {formatDate(currentImage.created_at)}
+                  {currentImage.device && (
+                    <span> · Shot on {currentImage.device}</span>
+                  )}
+                  {currentImage.location && (
+                    <span> · 📍 {currentImage.location}</span>
+                  )}
+                </div>
+                {/* EXIF信息显示 */}
+                {(currentImage.exif_f_number || currentImage.exif_exposure_time || currentImage.exif_iso || currentImage.exif_focal_length) && (
+                  <div className="text-sm text-white/70">
+                    {currentImage.exif_f_number && (
+                      <span>{formatFNumber(currentImage.exif_f_number)}</span>
+                    )}
+                    {currentImage.exif_exposure_time && (
+                      <span>{(currentImage.exif_focal_length || currentImage.exif_f_number) ? ' · ' : ''}{formatExposureTime(currentImage.exif_exposure_time)}</span>
+                    )}
+                    {currentImage.exif_iso && (
+                      <span>{(currentImage.exif_focal_length || currentImage.exif_f_number || currentImage.exif_exposure_time) ? ' · ' : ''}ISO {currentImage.exif_iso}</span>
+                    )}
+                  </div>
                 )}
               </div>
             )}

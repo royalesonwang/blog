@@ -138,9 +138,8 @@ export default function AlbumsPage() {
             </h2>
             <p className="mb-8 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
               A collection of memories captured in images. Browse through our albums and enjoy the visual journey of moments and experiences.
-            </p>
-          </div>
-          <div className="text-center text-gray-500 mt-8">
+            </p>          </div>
+          <div className="text-center text-muted-foreground mt-8">
             Loading...
           </div>
         </div>
@@ -174,9 +173,8 @@ export default function AlbumsPage() {
             </h2>
             <p className="mb-8 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
               A collection of memories captured in images. Browse through our albums and enjoy the visual journey of moments and experiences.
-            </p>
-          </div>
-          <div className="text-center text-gray-500 mt-8">
+            </p>          </div>
+          <div className="text-center text-muted-foreground mt-8">
             暂无相册
           </div>
         </div>
@@ -229,9 +227,8 @@ export default function AlbumsPage() {
             </h2>
             <p className="mb-8 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
               A collection of memories captured in images. Browse through our albums and enjoy the visual journey of moments and experiences.
-            </p>
-          </div>
-          <div className="text-center text-gray-500 mt-8">
+            </p>          </div>
+          <div className="text-center text-muted-foreground mt-8">
             没有包含图片的相册
           </div>
         </div>

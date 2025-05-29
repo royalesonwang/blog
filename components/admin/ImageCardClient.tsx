@@ -15,6 +15,7 @@ import FullScreenPreview from "./FullScreenPreview";
 import DeleteConfirmDialog from "./DeleteConfirmDialog";
 import EditImageDialog from "./EditImageDialog";
 import { getImageUrl, getThumbnailUrl } from "@/lib/url";
+import { formatExposureTime, formatFNumber, formatFocalLength, getDeviceInfo, getLocationInfo } from "@/lib/exif-parser";
 
 interface ImageUpload {
   id: number;
@@ -32,6 +33,10 @@ interface ImageUpload {
   uploaded_by: string;
   device?: string;
   location?: string;
+  exif_iso?: number | null; // ISO值
+  exif_exposure_time?: number | null; // 快门速度
+  exif_f_number?: number | null; // 光圈值
+  exif_focal_length?: number | null; // 焦距
   user: {
     nickname: string;
     avatar_url: string;

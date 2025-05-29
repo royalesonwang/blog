@@ -1,9 +1,11 @@
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import SubscriptionConfirmationEmail, { generateSubscriptionTextEmail } from '@/components/emails/subscription-confirmation';
+import ActivationEmail, { generateActivationTextEmail } from '@/components/emails/activation-email';
 import AdminNotificationEmail, { generateAdminNotificationTextEmail } from '@/components/emails/admin-notification';
 import PostPublishedEmail, { generatePostPublishedTextEmail } from '@/components/emails/post-published-notification';
 import PostUpdatedEmail, { generatePostUpdatedTextEmail } from '@/components/emails/post-updated-notification';
+import AlbumNotificationEmail, { generateAlbumNotificationTextEmail } from '@/components/emails/album-notification';
 import { generateUnsubscribeUrl } from '@/lib/unsubscribe-helper';
 
 // 初始化 Resend 客户端
@@ -33,6 +35,23 @@ export interface PostNotificationEmailData {
   postType: string;
   postUrl: string;
   coverImageUrl?: string;
+  uuid?: string; // 订阅的唯一标识，用于生成安全的取消订阅链接
+}
+
+export interface AlbumNotificationEmailData {
+  name: string;
+  email: string;
+  albumTitle: string;
+  albumDescription?: string;
+  albumUrl: string;
+  recentImages: {
+    file_path: string;
+    file_name?: string;
+    original_file_name?: string;
+    description?: string;
+    created_at: string;
+  }[];
+  totalCount: number; // 24小时内新增的图片总数
   uuid?: string; // 订阅的唯一标识，用于生成安全的取消订阅链接
 }
 
@@ -96,6 +115,37 @@ export async function sendSubscriptionConfirmationEmail(emailData: SubscriptionE
     });
   } catch (error) {
     console.error('Failed to send subscription confirmation email:', error);
+    throw error;
+  }
+}
+
+/**
+ * 发送订阅激活邮件
+ */
+export async function sendActivationEmail(emailData: SubscriptionEmailData & { activationUrl: string }) {
+  try {
+    // 使用 React 组件渲染邮件 HTML
+    const emailProps = {
+      name: emailData.name,
+      email: emailData.email,
+      content: emailData.content,
+      activationUrl: emailData.activationUrl,
+    };
+
+    const emailHtml = await render(ActivationEmail(emailProps));
+
+    // 使用组件中的函数生成纯文本版本
+    const emailText = generateActivationTextEmail(emailProps);
+
+    // 发送邮件
+    return await sendEmail({
+      to: emailData.email,
+      subject: '请激活您的订阅 - Eson Wang 的博客',
+      html: emailHtml,
+      text: emailText,
+    });
+  } catch (error) {
+    console.error('Failed to send activation email:', error);
     throw error;
   }
 }
@@ -270,6 +320,88 @@ export async function sendBulkPostNotifications(
       await new Promise(resolve => setTimeout(resolve, delayMs));
     }
   }
+    return { sent, errors };
+}
+
+/**
+ * 发送相册更新通知邮件
+ */
+export async function sendAlbumNotificationEmail(emailData: AlbumNotificationEmailData) {
+  try {
+    // 如果有uuid则生成安全的取消订阅链接
+    let unsubscribeUrl;
+    if (emailData.uuid) {
+      unsubscribeUrl = generateUnsubscribeUrl(emailData.uuid);
+    }    // 使用 React 组件渲染邮件 HTML
+    const emailProps = {
+      name: emailData.name,
+      email: emailData.email,
+      albumTitle: emailData.albumTitle,
+      albumDescription: emailData.albumDescription,
+      albumUrl: emailData.albumUrl,
+      recentImages: emailData.recentImages,
+      totalCount: emailData.totalCount,
+      unsubscribeUrl,
+    };
+
+    const emailHtml = await render(AlbumNotificationEmail(emailProps));
+
+    // 使用组件中的函数生成纯文本版本
+    const emailText = generateAlbumNotificationTextEmail(emailProps);
+
+    // 发送邮件
+    return await sendEmail({
+      to: emailData.email,
+      subject: `相册更新通知：${emailData.albumTitle} - Eson Wang 的博客`,
+      html: emailHtml,
+      text: emailText,
+    });
+  } catch (error) {
+    console.error('Failed to send album notification email:', error);
+    throw error;
+  }
+}
+
+/**
+ * 批量发送相册更新通知邮件
+ * @param emailDataList 收件人数据列表
+ * @returns 发送结果统计
+ */
+export async function sendBulkAlbumNotifications(
+  emailDataList: AlbumNotificationEmailData[]
+): Promise<{ sent: number; errors: number }> {
+  let sent = 0;
+  let errors = 0;
+  
+  const batchSize = 10; // 每批处理10封邮件
+  
+  console.log(`开始批量发送相册更新通知给 ${emailDataList.length} 位订阅者...`);
+  
+  for (let i = 0; i < emailDataList.length; i += batchSize) {
+    const batch = emailDataList.slice(i, i + batchSize);
+    console.log(`处理第 ${Math.floor(i / batchSize) + 1} 批邮件 (${batch.length} 封)...`);
+    
+    const promises = batch.map(data => 
+      sendAlbumNotificationEmail(data)
+        .then(() => { 
+          sent++; 
+          console.log(`✓ 成功发送相册通知邮件到 ${data.email}`);
+        })
+        .catch(error => {
+          console.error(`✗ 发送相册通知邮件到 ${data.email} 失败:`, error);
+          errors++;
+        })
+    );
+    
+    await Promise.allSettled(promises);
+    
+    // 每批处理后加入短暂延迟，避免API速率限制
+    if (i + batchSize < emailDataList.length) {
+      const delayMs = 1000; // 1秒延迟
+      console.log(`批处理延迟 ${delayMs}ms，防止API速率限制...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
   
   return { sent, errors };
 }
@@ -281,4 +413,6 @@ export default {
   sendPostPublishedEmail,
   sendPostUpdatedEmail,
   sendBulkPostNotifications,
+  sendAlbumNotificationEmail,
+  sendBulkAlbumNotifications,
 };

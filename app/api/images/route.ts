@@ -45,13 +45,6 @@ export async function GET(request: NextRequest) {
     const adminEmails = process.env.ADMIN_EMAILS?.split(",");
     const isAdmin = userInfo?.email && adminEmails?.includes(userInfo.email);
 
-    console.log("Fetching images with params:", {
-      search,
-      folder,
-      page,
-      limit,
-      isAdmin,
-    });    // Build query - 使用 file_path 替代旧的 URL 字段
     let query = supabase
       .from("image_uploads")
       .select(
@@ -114,9 +107,6 @@ export async function GET(request: NextRequest) {
           { status: 500 }
         );
       }
-
-      console.log(`Found ${images?.length || 0} images, total count: ${count || 0}`);
-
       // Transform the images data to handle the nested user data
       const transformedImages = images?.map((image) => ({
         ...image,
@@ -191,7 +181,6 @@ export async function DELETE(request: NextRequest) {
         const body = await request.json();
         if (body.imageId) {
           imageId = body.imageId.toString();
-          console.log("Got imageId from request body:", imageId);
         } else {
           return NextResponse.json(
             { success: false, message: "Image ID is required" },
@@ -213,11 +202,10 @@ export async function DELETE(request: NextRequest) {
     // 检查用户是否为管理员
     const userInfo = session.user;
     const adminEmails = process.env.ADMIN_EMAILS?.split(",");
-    const isAdmin = userInfo?.email && adminEmails?.includes(userInfo.email);    console.log("Deleting image with ID:", imageId);
+    const isAdmin = userInfo?.email && adminEmails?.includes(userInfo.email);
 
     // 检查是否有sourceTable参数，如果有则从指定表删除，默认为image_uploads
     const sourceTable = request.nextUrl.searchParams.get("sourceTable") || "image_uploads";
-    console.log("Source table:", sourceTable);
     
     // 首先从指定表获取图片信息以便之后从存储中删除
     let query = supabase
@@ -233,7 +221,6 @@ export async function DELETE(request: NextRequest) {
       
       // 如果从指定表获取失败，且指定表是image_uploads，则尝试从album_image获取
       if (sourceTable === "image_uploads") {
-        console.log("Trying to find image in album_image table");
         const { data: albumImageData, error: albumFetchError } = await supabase
           .from("album_image")
           .select("file_name, uploaded_by")
@@ -249,7 +236,6 @@ export async function DELETE(request: NextRequest) {
         }
         
         // 如果在album_image表中找到了图片
-        console.log("Found image in album_image table");
         return NextResponse.json(
           { success: false, message: `This image belongs to an album. Please use sourceTable=album_image parameter.` },
           { status: 400 }
@@ -293,8 +279,6 @@ export async function DELETE(request: NextRequest) {
       const command = new DeleteObjectCommand(deleteParams);
       await S3.send(command);
 
-      console.log("R2 delete successful for original:", imageData.file_name);
-
       // 删除对应的缩略图
       // 从file_name解析路径，替换uploads为thumbnail
       if (imageData.file_name && imageData.file_name.startsWith("uploads/")) {
@@ -308,7 +292,6 @@ export async function DELETE(request: NextRequest) {
         const thumbnailCommand = new DeleteObjectCommand(thumbnailDeleteParams);
         await S3.send(thumbnailCommand);
 
-        console.log("R2 delete successful for thumbnail:", thumbnailPath);
       }
     } catch (r2Error) {
       console.error("R2 delete error:", r2Error);
@@ -368,8 +351,6 @@ export async function PUT(request: NextRequest) {
     const userInfo = session.user;
     const adminEmails = process.env.ADMIN_EMAILS?.split(",");
     const isAdmin = userInfo?.email && adminEmails?.includes(userInfo.email);
-
-    console.log("Updating image with ID:", imageId);
 
     // First get the image to check permissions
     const { data: imageData, error: fetchError } = await supabase

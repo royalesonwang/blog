@@ -61,14 +61,13 @@ export default function ImageUploadPage() {
       setAltText("");
     }
   };
-  return (
-    <div className="container max-w-7xl py-10">
+  return (    <div className="container max-w-7xl py-10">
       <div className="flex items-center gap-3 mb-8">
-        <CloudIcon className="h-8 w-8 text-blue-500" />
+        <CloudIcon className="h-8 w-8 text-blue-500 dark:text-blue-400" />
         <h1 className="text-3xl font-bold">Cloudflare R2 Image Upload</h1>
       </div>
       
-      <Alert className="mb-6 bg-blue-50">
+      <Alert className="mb-6" variant="info">
         <Info className="h-4 w-4" />
         <AlertTitle>About Cloudflare R2 Image Upload</AlertTitle>
         <AlertDescription>
@@ -89,7 +88,6 @@ export default function ImageUploadPage() {
               defaultFolder="default"
               onImageUploaded={handleImageUploaded}
               onImagesUploaded={handleImagesUploaded}
-              showPreview={false}
               previewHeight="h-64"
               onPreviewChange={(url) => setPreviewUrl(url)}
               onFileSelected={(hasFile) => setHasFileSelected(hasFile)}

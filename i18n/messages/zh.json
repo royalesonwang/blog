@@ -140,7 +140,9 @@
     "submit": "提交",
     "submitting": "提交中...",
     "subscribe_button": "订阅",
+    "subscribe": "订阅",
     "subscribing": "订阅中...",
+    "enter_email": "请输入您的邮箱",
     "success_message": "订阅成功！一封邮件已发送到您的邮箱。",
     "already_subscribed": "您已经用此邮箱订阅过了",
     "error_message": "订阅失败，请重试",
@@ -158,6 +160,20 @@
       "required_fields": "请填写所有必填字段",
       "turnstile_required": "请完成安全验证"
     }
+  },
+  "activate": {
+    "processing": "正在激活您的订阅...",
+    "success_title": "订阅激活成功",
+    "success_message": "恭喜！您的订阅已成功激活。",
+    "success_description": "您现在将开始收到我们精选的内容更新。我们很高兴您加入我们的订阅者社区！",
+    "error_title": "激活失败",
+    "error_missing_uuid": "缺少激活码或激活码无效",
+    "error_invalid_link": "激活链接已过期或无效",
+    "error_network": "网络错误，请稍后再试",
+    "error_unknown": "未知错误",
+    "back_home": "返回主页",
+    "go_to_blog": "查看博客",
+    "retry": "重试"
   },
   "unsubscribe": {
     "processing": "正在处理您的请求...",

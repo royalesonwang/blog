@@ -22,14 +22,24 @@ export default function SubscribePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const t = useTranslations('subscribe');
-  const { user } = useAppContext();  const [formData, setFormData] = useState<SubscribeFormData>({
-    name: user?.name || '',
-    email: searchParams.get('email') || user?.email || '',
-    content: ['Knowledge', 'Life', 'Academic', 'Album'], // 默认全选所有内容
-    turnstileToken: ''
+  const { user } = useAppContext();  const [formData, setFormData] = useState<SubscribeFormData>(() => {
+    const email = searchParams.get('email') || user?.email || '';
+    let name = user?.name || '';
+    
+    // 如果没有用户姓名且邮箱包含@符号，自动填充姓名
+    if (!name && email.includes('@')) {
+      name = email.split('@')[0];
+    }
+    
+    return {
+      name,
+      email,
+      content: ['Knowledge', 'Life', 'Academic', 'Album'], // 默认全选所有内容
+      turnstileToken: ''
+    };
   });
-
   const [loading, setLoading] = useState(false);
+
   const contentOptions = [
     { id: 'Knowledge', label: t('knowledge'), description: t('knowledge_description') },
     { id: 'Life', label: t('life'), description: t('life_description') },
@@ -130,22 +140,35 @@ export default function SubscribePage() {
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => {
+                    const email = e.target.value;
+                    setFormData(prev => {
+                      const newData = { ...prev, email };
+                      
+                      // 如果姓名字段为空且邮箱包含@符号，自动填充姓名
+                      if (!prev.name && email.includes('@')) {
+                        const emailPrefix = email.split('@')[0];
+                        newData.name = emailPrefix;
+                      }
+                      
+                      return newData;
+                    });
+                  }}
                   placeholder={t('email_placeholder')}
                   required
                 />
-              </div>              {/* 内容选择 */}
+              </div>{/* 内容选择 */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-4">
                   {t('content_label')} <span className="text-red-500">*</span>
                 </label>
-                <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   {contentOptions.map((option) => {
                     const isChecked = formData.content.includes(option.id);
                     return (
                       <label 
                         key={option.id}
-                        className="flex items-start space-x-3 p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer block"
+                        className="flex items-start space-x-3 p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                       >
                         <div className="mt-0.5">
                           <Checkbox
@@ -174,11 +197,6 @@ export default function SubscribePage() {
                       // 当验证成功时设置token
                       setFormData(prev => ({ ...prev, turnstileToken: token }));
                       console.log('Verification successful');
-                      
-                      // 如果其他表单字段已经填写完成，可以在这里显示提示
-                      if (formData.name && formData.email && formData.content.length > 0) {
-                        toast.success(t('verification_success'));
-                      }
                     }}
                     onError={() => {
                       setFormData(prev => ({ ...prev, turnstileToken: '' }));

@@ -2,6 +2,7 @@ import { Subscribe } from "@/types/subscribe";
 import { getSupabaseClient } from "./db";
 
 export enum SubscribeStatus {
+  Pending = "pending",
   Active = "active",
   Inactive = "inactive",
   Deleted = "deleted",
@@ -26,7 +27,7 @@ export async function insertSubscribe(subscribe: Subscribe) {
     name: subscribe.name,
     email: subscribe.email,
     content: subscribe.content.join(','),
-    status: subscribe.status || SubscribeStatus.Active,
+    status: subscribe.status || SubscribeStatus.Pending, // 默认为pending状态
     plan: subscribe.plan || SubscribePlan.Free,
     created_at: new Date().toISOString(),
     uuid: subscribe.uuid || generateUUID()
@@ -195,4 +196,61 @@ export async function findActiveSubscribersByContentType(
   console.log(`过滤后剩余 ${filteredSubscribers.length} 个匹配的订阅者`);
   
   return filteredSubscribers;
+}
+
+/**
+ * 激活订阅并重新生成UUID
+ * @param uuid 当前的UUID
+ * @returns 激活后的新UUID
+ */
+export async function activateSubscription(uuid: string): Promise<string | null> {
+  const supabase = getSupabaseClient();
+  
+  // 首先检查订阅是否存在且为pending状态
+  const { data: existingSubscribe } = await supabase
+    .from("subscribe")
+    .select("*")
+    .eq("uuid", uuid)
+    .eq("status", SubscribeStatus.Pending)
+    .single();
+
+  if (!existingSubscribe) {
+    return null; // 订阅不存在或已激活
+  }
+
+  // 生成新的UUID
+  const newUUID = generateUUID();
+  
+  const { error } = await supabase
+    .from("subscribe")
+    .update({
+      status: SubscribeStatus.Active,
+      uuid: newUUID,
+      updated_at: new Date().toISOString()
+    })
+    .eq("uuid", uuid);
+
+  if (error) {
+    console.error("Error activating subscription:", error);
+    return null;
+  }
+
+  return newUUID;
+}
+
+/**
+ * 检查邮箱是否有待激活的订阅
+ * @param email 邮箱地址
+ * @returns 是否有待激活的订阅
+ */
+export async function hasPendingSubscription(email: string): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("subscribe")
+    .select("id")
+    .eq("email", email)
+    .eq("status", SubscribeStatus.Pending)
+    .single();
+
+  return !error && data !== null;
 }

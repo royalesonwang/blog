@@ -11,7 +11,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import MultiImageUploader from "@/components/image/MultiImageUploader";
@@ -22,6 +21,7 @@ interface AddImagesDialogProps {
   onClose: () => void;
   onImagesUploaded: (uploadedImages: any[]) => void;
   albumId: string;
+  albumName?: string; // 添加相册名字属性
 }
 
 export default function AddImagesDialog({
@@ -29,6 +29,7 @@ export default function AddImagesDialog({
   onClose,
   onImagesUploaded,
   albumId,
+  albumName,
 }: AddImagesDialogProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<Array<{
@@ -82,21 +83,20 @@ export default function AddImagesDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[1200px] h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlbumIcon className="h-5 w-5 text-blue-500" />
             上传图片到相册
-          </DialogTitle>
-          <DialogDescription>
-            上传图片到相册"{albumId}"。大尺寸图片（超过1440px）将自动调整大小，
+          </DialogTitle>          <DialogDescription>
+            上传图片到相册"{albumName || albumId}"。大尺寸图片（超过1440px）将自动调整大小，
             并生成缩略图（最大960px）用于显示。
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="max-h-[50vh] overflow-y-auto">
-            <CardHeader className="sticky top-0 bg-card z-10 border-b pb-3">
+          <Card className="max-h-[70vh] overflow-y-auto">
+            <CardHeader className="pb-3">
               <CardTitle>上传新图片</CardTitle>
               <CardDescription>
                 选择要上传到相册的图片文件。
@@ -105,7 +105,6 @@ export default function AddImagesDialog({
             <CardContent className="pt-3">              <MultiImageUploader 
                 defaultFolder={`album/${albumId}`}
                 onImagesUploaded={handleImagesUploaded}
-                showPreview={false}
                 previewHeight="h-64"
                 showFileInfo={true}
                 onPreviewChange={(url) => setPreviewUrl(url)}
@@ -114,23 +113,19 @@ export default function AddImagesDialog({
                 maxFiles={10}
                 targetTable="album_image"
                 albumId={albumId}
-              />
-              <p className="mt-2 text-xs text-muted-foreground">
-                图片将存储在 album/{albumId}/图片文件 的路径结构中。
+              />              <p className="mt-2 text-xs text-muted-foreground">
+                图片将存储在 album/{albumName || albumId}/ 文件夹中。
               </p>
             </CardContent>
           </Card>
           
-          <Card className="max-h-[50vh] overflow-y-auto">
-            <CardHeader className="sticky top-0 bg-card z-10 border-b pb-3">
-              <CardTitle>上传详情</CardTitle>
-              <CardDescription>
-                已上传图片的相关信息。
-              </CardDescription>
+          <Card className="max-h-[70vh] overflow-y-auto">
+            <CardHeader className="pb-3">
+              <CardTitle>图片预览</CardTitle>
             </CardHeader>
             <CardContent className="pt-3">
               {uploadedImages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-48 text-center">
+                <div className="flex flex-col items-center justify-center text-center">
                   {previewUrl ? (
                     <img
                       src={previewUrl}
@@ -206,12 +201,6 @@ export default function AddImagesDialog({
             </CardContent>
           </Card>
         </div>
-        
-        <DialogFooter className="flex justify-between items-center mt-4">
-          <Button variant="outline" onClick={handleClose} disabled={isUploading}>
-            {isUploading ? "上传中..." : "关闭"}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

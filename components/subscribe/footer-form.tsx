@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { useRouter, usePathname } from "next/navigation";
+import SubscriptionModal from "./subscription-modal";
 
 interface FooterSubscribeFormProps {
   className?: string;
@@ -15,10 +15,9 @@ interface FooterSubscribeFormProps {
 export default function FooterSubscribeForm({ className = "" }: FooterSubscribeFormProps) {
   const { data: session } = useSession();
   const t = useTranslations("subscribe");
-  const router = useRouter();
-  const pathname = usePathname();
   
   const [email, setEmail] = useState(session?.user?.email || "");
+  const [showModal, setShowModal] = useState(false);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -38,74 +37,40 @@ export default function FooterSubscribeForm({ className = "" }: FooterSubscribeF
       return;
     }
 
-    // 将当前页面路径存储到sessionStorage，用于订阅完成后返回
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('subscribeReturnUrl', pathname);
-    }
+    // 打开订阅模态窗口，传递邮箱
+    setShowModal(true);
+  };
 
-    // 跳转到专门的订阅页面，并传递邮箱参数
-    const subscribeUrl = `/subscribe?email=${encodeURIComponent(email)}`;
-    router.push(subscribeUrl);
-  };  return (
+  return (
     <div className={`w-full ${className}`}>
       <form onSubmit={handleSubmit} className="space-y-3">
-        {/* Desktop layout: description and input in one row */}
-        <div className="hidden lg:flex lg:items-center lg:gap-3">
-          <div className="flex-shrink-0">
-            <p className="text-sm">
-              {t("subscribe_short_desc")}
-            </p>
-          </div>          <div className="flex items-center gap-1">
-            <div className="w-52">
-              <Input
-                type="email"
-                placeholder={t("email_placeholder")}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={!!session?.user?.email}
-                required
-                className="h-8 text-xs rounded-r-none" 
-              />
-            </div>
-            <div className="flex-shrink-0">
-              <Button 
-                type="submit" 
-                className="h-8 text-xs px-3 rounded-l-none"
-                size="sm"
-              >
-                {t("subscribe_button")}
-              </Button>
-            </div>
+        <div className="flex gap-0">
+          <div className="w-52">
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("enter_email")}
+              className="h-8 text-xs rounded-r-none"
+              required
+            />
           </div>
-        </div>        {/* Mobile layout: description above, input below */}
-        <div className="lg:hidden space-y-2">
-          <p className="text-xs text-center text-muted-foreground/80">
-            {t("subscribe_short_desc")}
-          </p>
-          <div className="flex items-center gap-1">
-            <div className="flex-1">
-              <Input
-                type="email"
-                placeholder={t("email_placeholder")}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={!!session?.user?.email}
-                required
-                className="h-8 text-xs rounded-r-none"
-              />
-            </div>
-            <div className="flex-shrink-0">
-              <Button 
-                type="submit" 
-                className="h-8 text-xs px-3 rounded-l-none"
-                size="sm"
-              >
-                {t("subscribe_button")}
-              </Button>
-            </div>
-          </div>
+          <Button
+            type="submit"
+            size="sm"
+            className="h-8 text-xs px-3 rounded-l-none"
+          >
+            {t("subscribe")}
+          </Button>
         </div>
       </form>
+
+      {/* 订阅模态窗口 */}
+      <SubscriptionModal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        initialEmail={email}
+      />
     </div>
   );
 }

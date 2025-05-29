@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { insertSubscribe, findSubscribeByEmail, updateSubscribeContent, getAllSubscribes } from "@/models/subscribe";
+import { insertSubscribe, findSubscribeByEmail, updateSubscribeContent, getAllSubscribes, hasPendingSubscription } from "@/models/subscribe";
 import { respData, respErr } from "@/lib/resp";
 import { getUserInfo } from "@/services/user";
-import { sendSubscriptionConfirmationEmail, sendAdminNotificationEmail } from "@/lib/email";
+import { sendSubscriptionConfirmationEmail, sendAdminNotificationEmail, sendActivationEmail } from "@/lib/email";
 import { verifyTurnstileToken, getClientIP } from "@/lib/turnstile";
 
 // 生成UUID的辅助函数
@@ -71,7 +71,16 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-        // 如果用户状态是 inactive，当作新订阅处理，重新激活
+      
+      // 如果用户状态是 pending，提示用户完成激活
+      if (existingSubscribe.status === 'pending') {
+        return NextResponse.json(
+          { success: false, message: "请根据之前发的激活邮件完成激活操作" },
+          { status: 400 }
+        );
+      }
+        
+      // 如果用户状态是 inactive，当作新订阅处理，重新激活
       if (existingSubscribe.status === 'inactive') {
         const updated = await updateSubscribeContent(email, content);
         if (updated) {
@@ -113,28 +122,33 @@ export async function POST(request: NextRequest) {
             { status: 500 }
           );
         }      }
-    }// 创建新订阅
+    }    // 创建新订阅
     const subscribeData = {
       name: name || "匿名用户",
       email,
       content,
-      status: "active",
+      status: "pending", // 设为待激活状态
       plan: "free",
-      uuid: generateUUID() // 生成UUID用于安全的取消订阅链接
+      uuid: generateUUID() // 生成UUID用于激活链接
     };
 
-    const insertResult = await insertSubscribe(subscribeData);    // 发送确认邮件给用户
+    const insertResult = await insertSubscribe(subscribeData);    // 生成激活链接
+    const baseUrl = process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000';
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const activationUrl = `${cleanBaseUrl}/activate?uuid=${subscribeData.uuid}`;
+
+    // 发送激活邮件给用户
     try {
-      await sendSubscriptionConfirmationEmail({
+      await sendActivationEmail({
         name: subscribeData.name,
         email,
         content,
-        uuid: subscribeData.uuid // 传递UUID用于生成安全的取消订阅链接
+        activationUrl
       });
-      console.log("Subscription confirmation email sent successfully");
+      console.log("Activation email sent successfully");
     } catch (emailError) {
-      console.error("Failed to send confirmation email:", emailError);
-      // 邮件发送失败不影响订阅成功
+      console.error("Failed to send activation email:", emailError);
+      // 邮件发送失败不影响订阅创建
     }
 
     // 发送通知邮件给管理员
@@ -148,11 +162,9 @@ export async function POST(request: NextRequest) {
     } catch (emailError) {
       console.error("Failed to send admin notification:", emailError);
       // 管理员通知失败不影响订阅成功
-    }
-
-    return NextResponse.json({
+    }    return NextResponse.json({
       success: true,
-      message: "订阅成功！确认邮件已发送到您的邮箱。"
+      message: "订阅申请已提交！激活邮件已发送到您的邮箱，请点击邮件中的链接完成激活。"
     });
 
   } catch (error) {

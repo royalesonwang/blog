@@ -4,20 +4,21 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
-interface UnsubscribeResult {
+interface ActivationResult {
   success: boolean;
   message: string;
-  email?: string;
 }
 
-export default function UnsubscribePage() {  const [result, setResult] = useState<UnsubscribeResult | null>(null);
+export default function ActivatePage() {
+  const [result, setResult] = useState<ActivationResult | null>(null);
   const [loading, setLoading] = useState(true);
   const searchParams = useSearchParams();
   const uuid = searchParams.get('uuid');
-  const t = useTranslations('unsubscribe');
+  const t = useTranslations('activate');
 
   useEffect(() => {
-    const handleUnsubscribe = async () => {      if (!uuid) {
+    const handleActivation = async () => {
+      if (!uuid) {
         setResult({
           success: false,
           message: t('error_missing_uuid')
@@ -27,20 +28,21 @@ export default function UnsubscribePage() {  const [result, setResult] = useStat
       }
 
       try {
-        const response = await fetch(`/api/subscribe/unsubscribe?uuid=${encodeURIComponent(uuid)}`, {
+        const response = await fetch(`/api/activate?uuid=${encodeURIComponent(uuid)}`, {
           method: 'GET',
-        });        if (response.ok) {
+        });
+
+        if (response.ok) {
           const data = await response.json();
           setResult({
             success: true,
-            message: t('success_message'),
-            email: data.email // 从API响应中获取邮箱地址
+            message: data.message || t('success_message')
           });
         } else {
           const data = await response.json();
           setResult({
             success: false,
-            message: data.message || t('error_unknown')
+            message: data.message || t('error_invalid_link')
           });
         }
       } catch (error) {
@@ -51,7 +53,9 @@ export default function UnsubscribePage() {  const [result, setResult] = useStat
       } finally {
         setLoading(false);
       }
-    };    handleUnsubscribe();
+    };
+
+    handleActivation();
   }, [uuid, t]);
   if (loading) {
     return (
@@ -71,35 +75,33 @@ export default function UnsubscribePage() {  const [result, setResult] = useStat
         <div className="bg-card rounded-lg shadow-lg p-8 text-center">
           {result?.success ? (
             <>
-              <div className="text-6xl mb-6">✅</div>
-              <h1 className="text-2xl font-bold text-blue-600 mb-4">{t('success_title')}</h1>
-              <p className="text-muted-foreground mb-4">您已成功取消订阅。</p>
-              {result.email && (
-                <div className="bg-muted p-3 rounded-md mb-4">
-                  <span className="font-medium">{result.email}</span>
-                </div>
-              )}
+              <div className="text-6xl mb-6">🎉</div>
+              <h1 className="text-2xl font-bold text-green-600 mb-4">{t('success_title')}</h1>
               <p className="text-muted-foreground mb-6">
                 {t('success_description')}
               </p>
+              <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+                <p className="text-green-700 dark:text-green-300 text-sm">
+                  ✅ {result.message}
+                </p>
+              </div>
               <div className="space-y-3">
                 <a
                   href="/"
-                  className="block bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"                >
-                  {t('back_home')}
-                </a>
-                <a
-                  href="/#subscribe"
                   className="block bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition-colors"
                 >
-                  {t('resubscribe')}
+                  {t('go_to_blog')}
                 </a>
               </div>
             </>          ) : (
             <>
               <div className="text-6xl mb-6">❌</div>
               <h1 className="text-2xl font-bold text-red-600 mb-4">{t('error_title')}</h1>
-              <p className="text-muted-foreground mb-6">{result?.message || t('error_unknown')}</p>
+              <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+                <p className="text-red-700 dark:text-red-300 text-sm">
+                  {result?.message || t('error_unknown')}
+                </p>
+              </div>
               <div className="space-y-3">
                 <a
                   href="/"

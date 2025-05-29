@@ -44,11 +44,11 @@ export async function sendPostNotifications(post: Post, isUpdate: boolean = fals
         sent: 0,
         errors: 0,
         message: "文章缺少slug和uuid，无法生成有效链接"
-      };
-    }    // 生成文章URL，使用配置的域名或默认本地开发域名
+      };    }    // 生成文章URL，使用配置的域名或默认本地开发域名
     const baseUrl = process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000';
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     // 使用正确的文章路径 /posts/
-    const postUrl = `${baseUrl}/posts/${post.slug || post.uuid}`;
+    const postUrl = `${cleanBaseUrl}/posts/${post.slug || post.uuid}`;
       // 处理封面图片URL，确保它是完整的URL
     let fullCoverUrl = post.cover_url;
     if (fullCoverUrl && !fullCoverUrl.startsWith('http')) {

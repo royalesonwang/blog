@@ -134,7 +134,11 @@ export async function POST(req: Request) {
         user_uuid: user_uuid,
       },
       mode: is_subscription ? "subscription" : "payment",
-      success_url: `${process.env.NEXT_PUBLIC_WEB_URL}/pay-success/{CHECKOUT_SESSION_ID}`,
+      success_url: (() => {
+        const baseUrl = process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000';
+        const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        return `${cleanBaseUrl}/pay-success/{CHECKOUT_SESSION_ID}`;
+      })(),
       cancel_url: cancel_url,
     };
 

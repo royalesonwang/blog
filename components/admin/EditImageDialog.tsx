@@ -67,10 +67,6 @@ export default function EditImageDialog({
   });
   // 当image prop变化时，重新初始化表单数据
   useEffect(() => {
-    console.log('EditImageDialog - image object:', image);
-    console.log('EditImageDialog - device:', image.device);
-    console.log('EditImageDialog - location:', image.location);
-    
     setFormData({
       description: image.description || '',
       alt_text: image.alt_text || '',

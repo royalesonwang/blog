@@ -132,10 +132,9 @@ export default function AlbumsPage() {
     }
   };
 
-  return (
-    <div className="container max-w-7xl py-10">
+  return (    <div className="container max-w-7xl py-10">
       <div className="flex items-center gap-3 mb-8">
-        <BookImage className="h-8 w-8 text-blue-500" />
+        <BookImage className="h-8 w-8 text-blue-500 dark:text-blue-400" />
         <h1 className="text-3xl font-bold">相册管理</h1>
       </div>
       <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -165,10 +164,9 @@ export default function AlbumsPage() {
           {searchTerm ? "没有找到匹配的相册" : "暂无相册，点击\"新建相册\"按钮创建"}
         </div>
       ) : (
-        <>          {/* Instagram风格网格布局 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <>          {/* Instagram风格网格布局 */}          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {albums.map((album) => (
-              <div key={album.id} className="relative group rounded-lg overflow-hidden shadow border bg-white">
+              <div key={album.id} className="relative group rounded-lg overflow-hidden shadow border bg-background">
                 <img
                   src={album.cover_url ? getThumbnailUrl(album.cover_url) : "/default_album_cover.png"}
                   alt={album.title}
@@ -190,11 +188,10 @@ export default function AlbumsPage() {
                     title="管理图片"
                   >
                     <ImageIcon className="h-4 w-4" />
-                  </Button>
-                  <Button
+                  </Button>                  <Button
                     variant="outline"
                     size="icon"
-                    className="text-red-500 hover:text-red-700"
+                    className="text-destructive hover:text-destructive/80"
                     onClick={() => openDeleteDialog(album)}
                     title="删除相册"
                   >

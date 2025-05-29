@@ -43,7 +43,11 @@ export async function POST(request: NextRequest) {
     const device = formData.get("device") as string || "";
     const location = formData.get("location") as string || "";
     const targetTable = formData.get("targetTable") as string || "image_uploads"; // 默认上传到image_uploads表
-    const albumId = formData.get("albumId") as string || null; // 如果上传到相册，指定相册ID
+    const albumId = formData.get("albumId") as string || null; // 如果上传到相册，指定相册ID    // 获取EXIF数据
+    const exifIso = formData.get("exif_iso") as string || null;
+    const exifExposureTime = formData.get("exif_exposure_time") as string || null;
+    const exifFNumber = formData.get("exif_f_number") as string || null;
+    const exifFocalLength = formData.get("exif_focal_length") as string || null;
     
     if (!file) {
       return NextResponse.json(
@@ -92,12 +96,6 @@ export async function POST(request: NextRequest) {
             withoutEnlargement: true // 不放大小图片
           })
           .toBuffer();
-        
-        console.log("Resized original image:", { 
-          originalSize: buffer.length, 
-          resizedSize: originalBuffer.length,
-          originalDimensions: `${imageInfo.width}x${imageInfo.height}` 
-        });
       } else {
         console.log("Original image is within size limits, keeping as is");
       }
@@ -109,9 +107,7 @@ export async function POST(request: NextRequest) {
         Body: originalBuffer,
         ContentType: file.type,
       };
-      
-      console.log("Uploading original to R2:", { fileName, size: originalBuffer.length, type: file.type });
-      
+            
       const command = new PutObjectCommand(uploadParams);
       await S3.send(command);
       
@@ -125,12 +121,6 @@ export async function POST(request: NextRequest) {
             withoutEnlargement: true // 不放大小图片
           })
           .toBuffer();
-        
-        console.log("Generated thumbnail:", { 
-          originalSize: buffer.length, 
-          thumbnailSize: thumbnailBuffer.length,
-          originalDimensions: `${imageInfo.width}x${imageInfo.height}` 
-        });
       } else {
         thumbnailBuffer = originalBuffer;
         console.log("Image is small enough, using as thumbnail");
@@ -146,7 +136,6 @@ export async function POST(request: NextRequest) {
       
       const thumbnailCommand = new PutObjectCommand(thumbnailParams);
       await S3.send(thumbnailCommand);
-      console.log("Thumbnail upload successful");
       
       // 处理URL生成
       let publicUrl = '';
@@ -175,8 +164,6 @@ export async function POST(request: NextRequest) {
       // 选择使用哪个URL
       const url = process.env.STORAGE_DOMAIN ? storageUrl : publicUrl;
       const thumbnail = process.env.STORAGE_DOMAIN ? storageThumbnailUrl : thumbnailUrl;
-      
-      console.log("Generated URLs:", { original: url, thumbnail });
       
       // Save record to database
       const supabase = getSupabaseClient();
@@ -216,11 +203,13 @@ export async function POST(request: NextRequest) {
         storage_provider: 'cloudflare_r2',
         bucket_name: BUCKET_NAME,
         is_public: true,
-        uploaded_by: userUuid,
+        uploaded_by: userUuid,        // 添加EXIF数据字段
+        ...(exifIso ? { exif_iso: parseInt(exifIso) } : {}),
+        ...(exifExposureTime ? { exif_exposure_time: parseFloat(exifExposureTime) } : {}),
+        ...(exifFNumber ? { exif_f_number: parseFloat(exifFNumber) } : {}),
+        ...(exifFocalLength ? { exif_focal_length: parseFloat(exifFocalLength) } : {}),
         ...(targetTable === "album_image" && albumId ? { group_id: albumId } : {}) // 如果上传到相册，添加group_id字段
       };
-      
-      console.log(`Inserting to ${targetTable} table:`, insertData);
       
       // 根据targetTable参数决定存入哪个表
       const { data, error } = await supabase
@@ -237,7 +226,6 @@ export async function POST(request: NextRequest) {
         );
       }
       
-      console.log("Database insert successful:", data);
         return NextResponse.json({ 
         success: true, 
         message: "File uploaded successfully",

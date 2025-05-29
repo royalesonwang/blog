@@ -67,7 +67,7 @@ export default function Invite({ summary }: { summary: any }) {
   return (
     <div className="flex flex-wrap gap-6">
       <Card className="flex-1 p-6">
-        <h2 className="text-sm text-gray-500 mb-4">
+        <h2 className="text-sm text-muted-foreground mb-4">
           {t("my_invites.invite_code")}
         </h2>
         {user && user.uuid && (
@@ -92,7 +92,11 @@ export default function Invite({ summary }: { summary: any }) {
             </div>
             {user.invite_code && (
               <CopyToClipboard
-                text={`${process.env.NEXT_PUBLIC_WEB_URL}/i/${user?.invite_code}`}
+                text={(() => {
+                  const baseUrl = process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000';
+                  const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+                  return `${cleanBaseUrl}/i/${user?.invite_code}`;
+                })()}
                 onCopy={() => toast.success("copied")}
               >
                 <Button size="sm">{t("my_invites.copy_invite_link")}</Button>
@@ -100,14 +104,14 @@ export default function Invite({ summary }: { summary: any }) {
             )}
           </div>
         )}
-        <p className="text-sm text-gray-500">{t("my_invites.invite_tip")}</p>
+        <p className="text-sm text-muted-foreground">{t("my_invites.invite_tip")}</p>
       </Card>
 
       {/* 右侧奖励卡片 */}
       <Card className="flex-1 p-6">
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h2 className="text-sm text-gray-500 mb-4">
+            <h2 className="text-sm text-muted-foreground mb-4">
               {t("my_invites.invite_balance")}
             </h2>
             <p className="text-4xl font-bold">${summary.total_reward / 100}</p>
@@ -120,19 +124,19 @@ export default function Invite({ summary }: { summary: any }) {
         <div className="grid grid-cols-4 gap-4">
           <div>
             <p className="text-2xl font-bold">{summary.total_invited}</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {t("my_invites.total_invite_count")}
             </p>
           </div>
           <div>
             <p className="text-2xl font-bold">{summary.total_paid}</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {t("my_invites.total_paid_count")}
             </p>
           </div>
           <div>
             <p className="text-2xl font-bold">${summary.total_reward / 100}</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               {t("my_invites.total_award_amount")}
             </p>
           </div>

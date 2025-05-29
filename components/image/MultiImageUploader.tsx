@@ -11,8 +11,9 @@ import { Switch } from "@/components/ui/switch";
 import { ProgressCircle } from "./ProgressCircle";
 import { cn } from "@/lib/utils";
 import { getImageUrl, getThumbnailUrl } from "@/lib/url";
+import { extractExifData, getDeviceInfo, getLocationInfo, formatExposureTime, formatFNumber, formatFocalLength, getExifSummary, ExifData } from "@/lib/exif-parser";
 
-interface UploadedImage {
+interface UploadedImage {  
   id: string;
   file_path: string;
   fileName: string | null;
@@ -20,6 +21,12 @@ interface UploadedImage {
   size: number;
   width: number;
   height: number;
+  exif_iso?: number | null; // ISO值
+  exif_exposure_time?: number | null; // 快门速度
+  exif_f_number?: number | null; // 光圈值
+  exif_focal_length?: number | null; // 焦距
+  device?: string | null; // 设备信息
+  location?: string | null; // 位置信息
 }
 
 interface UploadedImageWithUrls extends UploadedImage {
@@ -31,7 +38,6 @@ interface ImageUploaderProps {
   onImagesUploaded?: (images: UploadedImageWithUrls[]) => void;
   onImageUploaded?: (imageUrl: string, thumbnailUrl: string, altText: string, fileName: string | null) => void;
   defaultFolder?: string;
-  showPreview?: boolean;
   showFileInfo?: boolean;
   previewHeight?: string;
   onPreviewChange?: (previewUrl: string | null) => void;
@@ -51,7 +57,6 @@ export default function ImageUploader({
   onImageUploaded,
   onImagesUploaded,
   defaultFolder = "default",
-  showPreview = true,
   showFileInfo = true,
   previewHeight = "h-48",
   onPreviewChange,
@@ -63,10 +68,10 @@ export default function ImageUploader({
   maxImageWidth = 1440, // 与后端一致
   maxImageHeight = 1440, // 与后端一致
   imageQuality = 1, // 默认质量100%
-  addWatermarkByDefault = true, // 默认添加水印
-}: ImageUploaderProps) {
-  const [files, setFiles] = useState<File[]>([]);
+  addWatermarkByDefault = false, // 默认不添加水印
+}: ImageUploaderProps) {  const [files, setFiles] = useState<File[]>([]);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [currentUploadIndex, setCurrentUploadIndex] = useState<number>(-1); // 添加当前上传文件索引
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -80,12 +85,13 @@ export default function ImageUploader({
   const [device, setDevice] = useState("");
   const [location, setLocation] = useState("");
   const [selectedFolder, setSelectedFolder] = useState(defaultFolder);
-  const [previewUrls, setPreviewUrls] = useState<{[key: string]: string}>({});
-  const [selectedPreviewIndex, setSelectedPreviewIndex] = useState<number | null>(null);
+  const [previewUrls, setPreviewUrls] = useState<{[key: string]: string}>({});  const [selectedPreviewIndex, setSelectedPreviewIndex] = useState<number | null>(null);
   // 添加一个状态来控制是否启用压缩
   const [enableCompression, setEnableCompression] = useState<boolean>(compressImages);
   // 添加一个状态来控制是否添加水印
   const [addWatermark, setAddWatermark] = useState<boolean>(addWatermarkByDefault);
+  // 添加状态来存储每个文件的EXIF数据
+  const [fileExifData, setFileExifData] = useState<{[key: string]: ExifData}>({});
 
   // 清理函数，组件卸载时释放创建的预览URL
   useEffect(() => {
@@ -120,26 +126,58 @@ export default function ImageUploader({
       allowedFiles.forEach((file, index) => {
         newPreviewUrls[`file-${index}`] = URL.createObjectURL(file);
       });
-      
-      setPreviewUrls(newPreviewUrls);
+        setPreviewUrls(newPreviewUrls);
       setSelectedPreviewIndex(0);
       
       // 通知父组件预览URL已更新
       if (onPreviewChange && Object.values(newPreviewUrls).length > 0) {
         onPreviewChange(Object.values(newPreviewUrls)[0]);
-      }
-      
-      // 通知父组件文件已选择
+      }      // 通知父组件文件已选择
       if (onFileSelected) {
         onFileSelected(allowedFiles.length > 0);
       }
+
+      // 清空之前的EXIF数据
+      setFileExifData({});
       
-      if (!multiple) {
-        setCurrentFile(allowedFiles[0] || null);
+      // 为所有文件提取EXIF数据（无论单图还是多图）
+      if (allowedFiles.length > 0) {
+        allowedFiles.forEach((file, index) => {
+          extractExifData(file).then(exifData => {
+              // 对于第一个文件，自动填充设备信息（但不填充地点信息）
+            if (index === 0) {
+              const deviceInfo = getDeviceInfo(exifData);
+              
+              // 只自动填充设备信息，不填充地点信息
+              if (deviceInfo && !device) {
+                setDevice(deviceInfo);
+              }
+            }
+            
+            // 存储EXIF数据以在预览中显示
+            if (exifData && Object.keys(exifData).length > 0) {
+              setFileExifData(prev => {
+                const newData = {
+                  ...prev,
+                  [`file-${index}`]: exifData
+                };
+                return newData;
+              });
+            } else {
+              console.log(`No EXIF data to store for file-${index}`);
+            }
+          }).catch(error => {
+            console.error(`EXIF提取失败，文件${index}:`, error);
+          });
+        });
+      }      // 设置当前文件（用于单图模式）
+      if (!multiple && allowedFiles.length > 0) {
+        setCurrentFile(allowedFiles[0]);
+      } else if (!multiple) {
+        setCurrentFile(null);
       }
     }
   };
-
   const handleRemoveFile = (index: number) => {
     const newFiles = [...files];
     newFiles.splice(index, 1);
@@ -162,6 +200,20 @@ export default function ImageUploader({
       });
       
       setPreviewUrls(updatedPreviewUrls);
+      
+      // 更新EXIF数据映射，确保键的连续性
+      const newFileExifData = { ...fileExifData };
+      delete newFileExifData[fileKey];
+      
+      const updatedFileExifData: {[key: string]: ExifData} = {};
+      newFiles.forEach((file, idx) => {
+        const oldKey = `file-${idx < index ? idx : idx + 1}`;
+        if (newFileExifData[oldKey]) {
+          updatedFileExifData[`file-${idx}`] = newFileExifData[oldKey];
+        }
+      });
+      
+      setFileExifData(updatedFileExifData);
       
       // 更新选中的预览
       if (selectedPreviewIndex === index) {
@@ -193,13 +245,17 @@ export default function ImageUploader({
     if (onPreviewChange) {
       onPreviewChange(previewUrls[`file-${index}`] || null);
     }
-  };
-
-  const uploadSingleFile = async (file: File, index: number): Promise<UploadedImage | null> => {
+  };  const uploadSingleFile = async (file: File, index: number): Promise<UploadedImage | null> => {
     try {
-      // 更新当前正在上传的文件
+      // 更新当前正在上传的文件和索引
       setCurrentFile(file);
-        // 创建form数据
+      setCurrentUploadIndex(index);
+      
+      // 使用已存储的EXIF数据（而不是重新提取，因为压缩后EXIF会丢失）
+      const exifData = fileExifData[`file-${index}`] || {};
+      console.log("使用已存储的EXIF数据:", exifData);
+      
+      // 创建form数据
       const formData = new FormData();
       formData.append("file", file);
       formData.append("description", description);
@@ -211,6 +267,19 @@ export default function ImageUploader({
       formData.append("targetTable", targetTable);
       if (albumId) {
         formData.append("albumId", albumId);
+      }
+        // 添加EXIF数据到表单
+      if (exifData.ISO) {
+        formData.append("exif_iso", exifData.ISO.toString());
+      }
+      if (exifData.ExposureTime) {
+        formData.append("exif_exposure_time", exifData.ExposureTime.toString());
+      }
+      if (exifData.FNumber) {
+        formData.append("exif_f_number", exifData.FNumber.toString());
+      }
+      if (exifData.FocalLength) {
+        formData.append("exif_focal_length", exifData.FocalLength.toString());
       }
 
       // 设置初始进度
@@ -244,9 +313,7 @@ export default function ImageUploader({
       setUploadProgress(prev => ({
         ...prev,
         [`file-${index}`]: 100
-      }));
-
-      const data = await response.json();
+      }));      const data = await response.json();
         if (response.ok) {
         const uploadedImage: UploadedImage = {
           id: data.id,
@@ -255,8 +322,15 @@ export default function ImageUploader({
           originalName: data.original_name,
           size: data.size,
           width: data.width,
-          height: data.height
-        };      console.log("Upload successful with details:", uploadedImage);
+          height: data.height,
+          // 添加EXIF数据到上传结果
+          exif_iso: exifData.ISO || null,
+          exif_exposure_time: exifData.ExposureTime || null,
+          exif_f_number: exifData.FNumber || null,
+          exif_focal_length: exifData.FocalLength || null,
+          device: device || null,
+          location: location || null
+        };console.log("Upload successful with details:", uploadedImage);
           // 单图上传回调兼容旧版接口
         if (!multiple && onImageUploaded) {
           try {
@@ -284,8 +358,7 @@ export default function ImageUploader({
       
       return null;
     }
-  };
-  const handleUpload = async () => {
+  };  const handleUpload = async () => {
     if (files.length === 0) {
       toast.error("请选择要上传的图片");
       return;
@@ -298,10 +371,11 @@ export default function ImageUploader({
       
       // 按顺序上传所有文件
       for (let i = 0; i < files.length; i++) {
-        // 先压缩图片
-        const compressedFile = await compressImage(files[i]);
-        // 上传压缩后的文件
-        const result = await uploadSingleFile(compressedFile, i);
+        // 压缩图片（如果启用压缩）
+        const fileToUpload = enableCompression ? await compressImage(files[i]) : files[i];
+        
+        // 上传文件（使用已经提取并存储的EXIF数据）
+        const result = await uploadSingleFile(fileToUpload, i);
         if (result) {
           results.push(result);
         }
@@ -333,42 +407,45 @@ export default function ImageUploader({
         });
         onImagesUploaded(processedResults);
       }
-      
-      // 清除预览
+        // 清除预览
       if (Object.keys(previewUrls).length > 0) {
         Object.values(previewUrls).forEach(url => {
           URL.revokeObjectURL(url);
         });
       }
-      
+        // 清空文件列表和相关状态
+      setFiles([]);
       setPreviewUrls({});
       setSelectedPreviewIndex(null);
+      setUploadProgress({});
+      setFileExifData({});
+      setCurrentUploadIndex(-1); // 重置当前上传索引
       
-      // 通知父组件预览已清除
+      // 通知父组件预览已清除和文件已清除
       if (onPreviewChange) {
         onPreviewChange(null);
       }
-      
-      toast.success(`成功上传 ${results.length} 个图片`);
+      if (onFileSelected) {
+        onFileSelected(false);
+      }
       
     } catch (error) {
       console.error("上传错误:", error);
-      toast.error(`上传图片失败: ${error instanceof Error ? error.message : "未知错误"}`);
-    } finally {
+      toast.error(`上传图片失败: ${error instanceof Error ? error.message : "未知错误"}`);    } finally {
       setUploading(false);
       setCurrentFile(null);
+      setCurrentUploadIndex(-1); // 重置当前上传索引
     }
-  };
-    const resetForm = () => {
+  };    const resetForm = () => {
     // 释放预览URL资源
     Object.values(previewUrls).forEach(url => {
       URL.revokeObjectURL(url);
     });
-    
-    setFiles([]);
+      setFiles([]);
     setPreviewUrls({});
     setSelectedPreviewIndex(null);
     setUploadedImages([]);
+    setCurrentUploadIndex(-1); // 重置当前上传索引
     setDescription("");
     setAltText("");
     setTags("");
@@ -376,6 +453,7 @@ export default function ImageUploader({
     setLocation("");
     setSelectedFolder(defaultFolder);
     setUploadProgress({});
+    setFileExifData({}); // 清除EXIF数据
     
     // 通知父组件文件已清除
     if (onPreviewChange) {
@@ -384,7 +462,7 @@ export default function ImageUploader({
     if (onFileSelected) {
       onFileSelected(false);
     }
-  };  // 图片压缩和添加水印函数
+  };// 图片压缩和添加水印函数
   const compressImage = async (file: File): Promise<File> => {
     // 如果用户禁用了压缩且不需要添加水印，或者文件是GIF格式(GIF不适合用canvas压缩)，直接返回原文件
     if ((!enableCompression && !addWatermark) || file.type === 'image/gif') {
@@ -497,13 +575,6 @@ export default function ImageUploader({
                       lastModified: Date.now(),
                     }
                   );
-                  
-                  // 打印处理信息
-                  console.log(`图片处理完成: ${file.name}`);
-                  console.log(`处理前: ${(file.size / 1024 / 1024).toFixed(2)}MB, ${img.width}x${img.height}`);
-                  console.log(`处理后: ${(processedFile.size / 1024 / 1024).toFixed(2)}MB, ${width}x${height}`);
-                  console.log(`水印: ${addWatermark ? '已添加' : '未添加'}`);
-                  
                   // 更新处理信息状态
                   setCompressionInfo({
                     original: { size: file.size, width: img.width, height: img.height },
@@ -618,6 +689,44 @@ export default function ImageUploader({
             </div>
           </div>
         )}
+        
+      <div className="space-y-4">
+        {/* 只有当有预览但没上传成功时显示预览图 */}
+        {selectedPreviewIndex !== null && files.length > 0 && (
+            <>
+              {/* 显示EXIF信息 - 强制显示以便调试 */}
+              {selectedPreviewIndex !== null && (
+                <div>
+                    {/* 显示EXIF摘要 */}
+                  {(() => {
+                    const exifData = fileExifData[`file-${selectedPreviewIndex}`];
+                    const summary = getExifSummary(exifData);
+                    
+                    if (summary) {
+                      return (
+                        <div className="mt-3 pt-3">
+                          <p className="text-md">{summary}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              )}
+            </>
+          )}
+          
+          {/* 上传成功后显示成功信息 */}
+          {uploadedImages.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <p className="font-medium">上传成功！</p>
+              </div>
+              
+            </div>
+          )}
+        </div>
         
         <div className="grid gap-2">
           <Label htmlFor="folder">文件夹</Label>
@@ -738,10 +847,9 @@ export default function ImageUploader({
           <Button 
             onClick={handleUpload} 
             disabled={files.length === 0 || uploading}
-            className="flex-1"
-          >
+            className="flex-1"          >
             {uploading 
-              ? `上传中 (${currentFile ? `${Math.round(uploadProgress[`file-${files.indexOf(currentFile)}`] || 0)}%` : "0%"})` 
+              ? `上传中 (${currentUploadIndex >= 0 ? `${Math.round(uploadProgress[`file-${currentUploadIndex}`] || 0)}%` : "0%"})` 
               : `上传${multiple ? " " + files.length + " 张" : ""}图片`}
           </Button>
           {files.length > 0 && (
@@ -752,114 +860,9 @@ export default function ImageUploader({
             >
               清除
             </Button>
-          )}
-        </div>
+          )}        </div>
       </div>
-          {showPreview && (
-        <div className="space-y-4">
-          {/* 只有当有预览但没上传成功时显示预览图 */}
-          {selectedPreviewIndex !== null && files.length > 0 && (
-            <>
-              <div className={`flex items-center justify-center ${previewHeight} bg-muted rounded-md mb-4`}>
-                <img
-                  src={previewUrls[`file-${selectedPreviewIndex}`]}
-                  alt="预览"
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div>
-              {/* 显示压缩信息 */}
-              {enableCompression && compressionInfo && (
-                <div className="text-sm p-3 bg-muted/50 rounded-md">
-                  <h4 className="font-medium mb-1">图片压缩信息</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">原始尺寸</p>
-                      <p>
-                        {compressionInfo.original.width} x {compressionInfo.original.height} 像素，
-                        {(compressionInfo.original.size / (1024 * 1024)).toFixed(2)} MB
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">压缩后</p>
-                      <p>
-                        {compressionInfo.compressed.width} x {compressionInfo.compressed.height} 像素，
-                        {(compressionInfo.compressed.size / (1024 * 1024)).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>                  <p className="text-xs mt-2 text-muted-foreground">
-                    压缩比: {Math.round((1 - compressionInfo.compressed.size / compressionInfo.original.size) * 100)}%
-                  </p>
-                  {addWatermark && (
-                    <p className="text-xs mt-1 text-muted-foreground flex items-center gap-1">
-                      <span className="inline-block w-2 h-2 bg-primary rounded-full"></span>
-                      已添加水印
-                    </p>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-          
-          {/* 上传成功后显示成功信息 */}
-          {uploadedImages.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <p className="font-medium">上传成功！</p>
-              </div>
-              
-              <div>
-                <Label>上传结果:</Label>
-                <div className="mt-2 space-y-4">
-                  {uploadedImages.map((image, index) => (
-                    <div key={index} className="border rounded-md p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">{image.originalName}</span>
-                      </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <div>
-                          <Label>原图 URL:</Label>
-                          <div className="flex gap-2 mt-1">
-                            <Input value={getImageUrl(image.file_path)} readOnly className="text-xs" />
-                            <Button 
-                              variant="outline" 
-                              size="icon"
-                              onClick={() => {
-                                navigator.clipboard.writeText(getImageUrl(image.file_path));
-                                toast.success("URL已复制到剪贴板");
-                              }}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <Label>缩略图 URL:</Label>
-                          <div className="flex gap-2 mt-1">
-                            <Input value={getThumbnailUrl(image.file_path)} readOnly className="text-xs" />
-                            <Button 
-                              variant="outline" 
-                              size="icon"
-                              onClick={() => {
-                                navigator.clipboard.writeText(getThumbnailUrl(image.file_path));
-                                toast.success("缩略图URL已复制到剪贴板");
-                              }}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      
     </div>
   );
 }

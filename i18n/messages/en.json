@@ -140,7 +140,9 @@
     "submit": "Submit",
     "submitting": "Submitting...",
     "subscribe_button": "Subscribe",
+    "subscribe": "Subscribe",
     "subscribing": "Subscribing...",
+    "enter_email": "Enter your email",
     "success_message": "Successfully subscribed! An email has been sent to your inbox.",
     "already_subscribed": "You're already subscribed with this email.",
     "error_message": "Failed to subscribe. Please try again.",
@@ -158,6 +160,20 @@
       "required_fields": "Please fill in all required fields",
       "turnstile_required": "Please complete security verification"
     }
+  },
+  "activate": {
+    "processing": "Activating your subscription...",
+    "success_title": "Subscription Activated Successfully",
+    "success_message": "Congratulations! Your subscription has been successfully activated.",
+    "success_description": "You will now start receiving our curated content updates. We're excited to have you as part of our subscriber community!",
+    "error_title": "Activation Failed",
+    "error_missing_uuid": "Missing or invalid activation code",
+    "error_invalid_link": "Activation link has expired or is invalid",
+    "error_network": "Network error, please try again later",
+    "error_unknown": "Unknown error",
+    "back_home": "Back to Home",
+    "go_to_blog": "Go to Blog",
+    "retry": "Retry"
   },
   "unsubscribe": {
     "processing": "Processing your request...",

@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { ArrowLeft, Info, ImageIcon, Pencil, BookImage, Plus } from "lucide-react";
+import { ArrowLeft, Info, ImageIcon, Pencil, BookImage, Plus, Mail } from "lucide-react";
 import AddImagesDialog from "@/components/admin/AddImagesDialog";
 import ImageCardClient from "@/components/admin/ImageCardClient";
+import AlbumNotificationDialog from "@/components/admin/AlbumNotificationDialog";
 
 interface AlbumGroup {
   id: number;
@@ -40,6 +41,10 @@ interface AlbumImage {
   uploaded_by?: string;
   device?: string;
   location?: string;
+  exif_iso?: number | null; // ISO值
+  exif_exposure_time?: number | null; // 快门速度
+  exif_f_number?: number | null; // 光圈值
+  exif_focal_length?: number | null; // 焦距
   user?: {
     nickname: string;
     avatar_url: string;
@@ -62,10 +67,12 @@ export default function AlbumImagesPage() {
   
   // 上传状态
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-  
+  const [uploadSuccess, setUploadSuccess] = useState(false);  
   // 添加图片对话框状态
   const [addImagesDialogOpen, setAddImagesDialogOpen] = useState(false);
+
+  // 相册通知对话框状态
+  const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
 
   // 加载相册和图片数据
   useEffect(() => {
@@ -204,11 +211,10 @@ export default function AlbumImagesPage() {
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          返回相册列表
-        </Button>
-        <Card className="bg-red-50">
+          返回相册列表        </Button>
+        <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800">
           <CardContent className="pt-6">
-            <p className="text-red-500">加载失败: {error || "无法加载相册"}</p>
+            <p className="text-red-600 dark:text-red-400">加载失败: {error || "无法加载相册"}</p>
           </CardContent>
         </Card>
       </div>
@@ -225,19 +231,25 @@ export default function AlbumImagesPage() {
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             返回相册列表
-          </Button>
-          <Button 
+          </Button>          <Button 
             variant="outline" 
             onClick={() => router.push(`/admin/albums/${albumId}/edit`)}
           >
             <Pencil className="h-4 w-4 mr-2" />
             编辑相册信息
           </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setNotificationDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Mail className="h-4 w-4" />
+            发送更新通知
+          </Button>
         </div>
-        
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div className="flex items-center gap-3">
-            <BookImage className="h-8 w-8 text-blue-500" />
+            <BookImage className="h-8 w-8 text-blue-500 dark:text-blue-400" />
             <div>
               <h1 className="text-3xl font-bold">{album.title}</h1>
               {album.description && (
@@ -257,7 +269,7 @@ export default function AlbumImagesPage() {
         </div>
       </div>
       
-      <Alert className="mb-6 bg-blue-50">
+      <Alert className="mb-6" variant="info">
         <Info className="h-4 w-4" />
         <AlertTitle>关于相册图片</AlertTitle>
         <AlertDescription>
@@ -314,13 +326,20 @@ export default function AlbumImagesPage() {
           </div>
         )}
       </div>
-      
-      {/* 添加图片对话框 */}
+        {/* 添加图片对话框 */}
       <AddImagesDialog
         open={addImagesDialogOpen}
         onClose={() => setAddImagesDialogOpen(false)}
-        onImagesUploaded={handleImagesUploaded}
+        onImagesUploaded={handleImagesUploaded}        albumId={albumId}
+        albumName={album?.title}
+      />
+
+      {/* 相册通知对话框 */}
+      <AlbumNotificationDialog
+        open={notificationDialogOpen}
+        onClose={() => setNotificationDialogOpen(false)}
         albumId={albumId}
+        albumTitle={album?.title || "相册"}
       />
     </div>
   );
