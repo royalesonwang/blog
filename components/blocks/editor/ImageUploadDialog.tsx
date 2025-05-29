@@ -125,8 +125,8 @@ export default function ImageUploadDialog({
             上传图片到 Cloudflare R2
           </DialogTitle>
           <DialogDescription>
-            上传图片用于内容展示。大尺寸图片（超过1440px）将自动调整大小，
-            并生成缩略图（最大960px）用于显示。
+            上传图片用于内容展示。大尺寸图片（超过2160px）将自动调整大小，
+            并生成缩略图（最大1200px）用于显示。
           </DialogDescription>
         </DialogHeader>
         

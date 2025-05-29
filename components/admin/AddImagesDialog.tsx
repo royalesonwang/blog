@@ -89,8 +89,8 @@ export default function AddImagesDialog({
             <AlbumIcon className="h-5 w-5 text-blue-500" />
             上传图片到相册
           </DialogTitle>          <DialogDescription>
-            上传图片到相册"{albumName || albumId}"。大尺寸图片（超过1440px）将自动调整大小，
-            并生成缩略图（最大960px）用于显示。
+            上传图片到相册"{albumName || albumId}"。大尺寸图片（超过2160px）将自动调整大小，
+            并生成缩略图（最大1200px）用于显示。
           </DialogDescription>
         </DialogHeader>
         

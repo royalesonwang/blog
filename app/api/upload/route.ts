@@ -86,12 +86,12 @@ export async function POST(request: NextRequest) {
       let originalBuffer = buffer;
       let thumbnailBuffer = buffer;
       
-      // 如果图片尺寸大于1440px，对原图进行压缩
-      if (imageInfo.width && imageInfo.height && (imageInfo.width > 1440 || imageInfo.height > 1440)) {
+      // 2160
+      if (imageInfo.width && imageInfo.height && (imageInfo.width > 2160 || imageInfo.height > 2160)) {
         originalBuffer = await sharp(buffer)
           .resize({
-            width: 1440,
-            height: 1440,
+            width: 2160,
+            height: 2160,
             fit: 'inside', // 保持原始纵横比
             withoutEnlargement: true // 不放大小图片
           })
@@ -111,12 +111,12 @@ export async function POST(request: NextRequest) {
       const command = new PutObjectCommand(uploadParams);
       await S3.send(command);
       
-      // 如果图片尺寸大于960，则生成缩略图，否则使用处理后的原图作为缩略图
-      if (imageInfo.width && imageInfo.height && (imageInfo.width > 960 || imageInfo.height > 960)) {
+      // 如果图片尺寸大于1200，则生成缩略图，否则使用处理后的原图作为缩略图
+      if (imageInfo.width && imageInfo.height && (imageInfo.width > 1200 || imageInfo.height > 1200)) {
         thumbnailBuffer = await sharp(buffer)
           .resize({
-            width: 960,
-            height: 960,
+            width: 1200,
+            height: 1200,
             fit: 'inside', // 保持原始纵横比
             withoutEnlargement: true // 不放大小图片
           })
@@ -175,15 +175,15 @@ export async function POST(request: NextRequest) {
       let finalHeight = imageInfo.height;
       
       // 如果原图被压缩了，更新宽高信息
-      if (imageInfo.width && imageInfo.height && (imageInfo.width > 1440 || imageInfo.height > 1440)) {
+      if (imageInfo.width && imageInfo.height && (imageInfo.width > 2160 || imageInfo.height > 2160)) {
         // 计算压缩后的尺寸，保持原始比例
         const aspectRatio = imageInfo.width / imageInfo.height;
         if (imageInfo.width > imageInfo.height) {
-          finalWidth = 1440;
-          finalHeight = Math.round(1440 / aspectRatio);
+          finalWidth = 2160;
+          finalHeight = Math.round(2160 / aspectRatio);
         } else {
-          finalHeight = 1440;
-          finalWidth = Math.round(1440 * aspectRatio);
+          finalHeight = 2160;
+          finalWidth = Math.round(2160 * aspectRatio);
         }
       }      // 准备插入数据 - 使用新的 file_path 字段，不再使用 public_url 和 thumbnail_url
       const insertData = {

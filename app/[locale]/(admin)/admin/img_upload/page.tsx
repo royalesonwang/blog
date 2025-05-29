@@ -71,8 +71,8 @@ export default function ImageUploadPage() {
         <Info className="h-4 w-4" />
         <AlertTitle>About Cloudflare R2 Image Upload</AlertTitle>
         <AlertDescription>
-          Images are uploaded to Cloudflare R2 storage. Large images (over 1440px) will be automatically 
-          resized to optimize storage and loading speed. Additionally, a thumbnail (max 960px) will be 
+          Images are uploaded to Cloudflare R2 storage. Large images (over 2160) will be automatically 
+          resized to optimize storage and loading speed. Additionally, a thumbnail (max 1200px) will be 
           generated for each image.
         </AlertDescription>      </Alert>
       
