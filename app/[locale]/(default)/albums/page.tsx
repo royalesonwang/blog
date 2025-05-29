@@ -140,9 +140,6 @@ export default function AlbumsPage() {
             <h2 className="mb-3 text-pretty text-3xl font-semibold md:mb-4 md:text-4xl lg:mb-6 lg:max-w-3xl lg:text-5xl">
               Photo Gallery
             </h2>
-            <p className="mb-8 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
-              A collection of memories captured in images. Browse through our albums and enjoy the visual journey of moments and experiences.
-            </p>
           </div>
           <div className="text-center text-red-500 mt-8">
             {error}
@@ -159,10 +156,11 @@ export default function AlbumsPage() {
               Photo Gallery
             </h2>
             <p className="mb-8 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
-              A collection of memories captured in images. Browse through our albums and enjoy the visual journey of moments and experiences.
-            </p>          </div>
+              A collection of memories captured in images.
+            </p>
+          </div>
           <div className="text-center text-muted-foreground mt-8">
-            暂无相册
+            No albums available at the moment.
           </div>
         </div>
       </section>
@@ -203,11 +201,9 @@ export default function AlbumsPage() {
             <h2 className="mb-3 text-pretty text-3xl font-semibold md:mb-4 md:text-4xl lg:mb-6 lg:max-w-3xl lg:text-5xl">
               Photo Gallery
             </h2>
-            <p className="mb-8 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
-              A collection of memories captured in images.
-            </p>          </div>
+          </div>
           <div className="text-center text-muted-foreground mt-8">
-            没有包含图片的相册
+            No albums with images available at the moment.
           </div>
         </div>
       </section>

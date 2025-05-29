@@ -44,14 +44,14 @@ export default function FooterSubscribeForm({ className = "" }: FooterSubscribeF
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="flex items-center gap-3">
           <h3 className="text-sm font-medium text-foreground whitespace-nowrap">Subscribe my blog</h3>
-          <div className="flex gap-0 flex-1">
+          <div className="flex gap-0 flex-1">            
             <div className="w-52">
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t("enter_email")}
-                className="h-8 text-xs rounded-r-none"
+                className="h-8 text-xs rounded-r-none outline-none focus:outline-none focus:ring-0 focus:ring-offset-0 focus:border-input focus-visible:ring-0 focus-visible:ring-offset-0"
                 required
               />
             </div>
