@@ -67,7 +67,7 @@ export default function ImageUploader({
   compressImages = true, // 默认启用压缩
   maxImageWidth = 2160, // 与后端一致
   maxImageHeight = 2160, // 与后端一致
-  imageQuality = 0.8, // 默认质量80%
+  imageQuality = 0.95, // 默认质量90%
   addWatermarkByDefault = false, // 默认不添加水印
 }: ImageUploaderProps) {  const [files, setFiles] = useState<File[]>([]);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
