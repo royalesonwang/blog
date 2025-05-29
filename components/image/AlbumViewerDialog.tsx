@@ -742,14 +742,12 @@ export default function AlbumViewerDialog({
                         <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                       </div>
                     )}
-                      {/* 只有在有图片数据时才渲染Image组件 */}
-                    {currentImage && (
-                      <Image
+                      {/* 只有在有图片数据时才渲染Image组件 */}                    {currentImage && (
+                      <img
                         src={getImageUrl(currentImage.file_path)}
                         alt={currentImage?.alt_text || currentImage?.original_file_name || '相册图片'}
-                        fill
                         className={cn(
-                          "object-contain transition-all duration-300",
+                          "object-contain transition-all duration-300 w-full h-full",
                           imageLoaded ? 'opacity-100' : 'opacity-0 blur-sm',
                           slideDirection === 'none' ? '' : 'scale-[0.98]'
                         )}
@@ -763,8 +761,6 @@ export default function AlbumViewerDialog({
                           height: '100%',
                           transform: `scale(${scale})`, // 应用缩放
                         }}
-                        sizes="(max-width: 768px) 100vw, 100vw"
-                        priority
                         onLoad={handleImageLoad}
                         onError={(e) => {
                           // 尝试使用不同的URL格式重试加载
@@ -797,17 +793,14 @@ export default function AlbumViewerDialog({
                         opacity: 0.2,
                         willChange: 'transform, opacity'
                       }}
-                    >
-                      <Image
+                    >                      <img
                         src={
                           slideDirection === 'right' 
                             ? getImageUrl(images[(currentImageIndex - 1 + images.length) % images.length]?.file_path)
                             : getImageUrl(images[(currentImageIndex + 1) % images.length]?.file_path)
                         }
                         alt="Previous image"
-                        fill
-                        sizes="100vw"
-                        className="object-contain"
+                        className="object-contain w-full h-full"
                         style={{
                           width: '100%',
                           height: '100%',
