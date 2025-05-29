@@ -143,7 +143,7 @@
     "subscribe": "Subscribe",
     "subscribing": "Subscribing...",
     "enter_email": "Enter your email",
-    "success_message": "Successfully subscribed! An email has been sent to your inbox.",
+    "success_message": "An activation email has been sent. Please activate in your mailbox to complete the subscription.",
     "already_subscribed": "You're already subscribed with this email.",
     "error_message": "Failed to subscribe. Please try again.",
     "error_network": "Network error, please try again later",

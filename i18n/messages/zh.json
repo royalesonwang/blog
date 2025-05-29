@@ -143,7 +143,7 @@
     "subscribe": "订阅",
     "subscribing": "订阅中...",
     "enter_email": "请输入您的邮箱",
-    "success_message": "订阅成功！一封邮件已发送到您的邮箱。",
+    "success_message": "一封激活邮件已经发送，请在邮箱中激活后即可完成订阅",
     "already_subscribed": "您已经用此邮箱订阅过了",
     "error_message": "订阅失败，请重试",
     "error_network": "网络错误，请稍后再试",
