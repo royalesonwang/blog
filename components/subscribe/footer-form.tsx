@@ -35,33 +35,34 @@ export default function FooterSubscribeForm({ className = "" }: FooterSubscribeF
     if (!validateEmail(email)) {
       toast.error(t("invalid_email"));
       return;
-    }
-
-    // 打开订阅模态窗口，传递邮箱
+    }    // 打开订阅模态窗口，传递邮箱
     setShowModal(true);
   };
 
   return (
     <div className={`w-full ${className}`}>
       <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="flex gap-0">
-          <div className="w-52">
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t("enter_email")}
-              className="h-8 text-xs rounded-r-none"
-              required
-            />
+        <div className="flex items-center gap-3">
+          <h3 className="text-sm font-medium text-foreground whitespace-nowrap">Subscribe my blog</h3>
+          <div className="flex gap-0 flex-1">
+            <div className="w-52">
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t("enter_email")}
+                className="h-8 text-xs rounded-r-none"
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              size="sm"
+              className="h-8 text-xs px-3 rounded-l-none"
+            >
+              {t("subscribe")}
+            </Button>
           </div>
-          <Button
-            type="submit"
-            size="sm"
-            className="h-8 text-xs px-3 rounded-l-none"
-          >
-            {t("subscribe")}
-          </Button>
         </div>
       </form>
 

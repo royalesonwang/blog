@@ -75,14 +75,14 @@ async function getAlbumInfo(albumId: string) {  try {
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
-    const albumId = params.id;
+    // 从URL中获取相册ID
+    const url = request.nextUrl;
+    const pathSegments = url.pathname.split('/');
+    const albumId = pathSegments[pathSegments.length - 2]; // notify前一个段是ID
     
-    if (!albumId) {
+    if (!albumId || albumId === 'notify') {
       return NextResponse.json(
         { success: false, message: '相册ID不能为空' },
         { status: 400 }
@@ -185,14 +185,14 @@ export async function POST(
   }
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
-    const albumId = params.id;
+    // 从URL中获取相册ID
+    const url = request.nextUrl;
+    const pathSegments = url.pathname.split('/');
+    const albumId = pathSegments[pathSegments.length - 2]; // notify前一个段是ID
     
-    if (!albumId) {
+    if (!albumId || albumId === 'notify') {
       return NextResponse.json(
         { success: false, message: '相册ID不能为空' },
         { status: 400 }
