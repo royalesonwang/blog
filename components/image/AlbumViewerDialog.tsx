@@ -36,11 +36,9 @@ const CustomDialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (  <DialogPortal>
-    <DialogOverlay className="transition-opacity duration-300 bg-black/60 backdrop-blur-sm border-0 outline-none" style={{ border: 'none', outline: 'none' }} />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-6xl translate-x-[-50%] translate-y-[-50%] gap-0 bg-black backdrop-blur-md p-0 border-0 outline-none shadow-none transition-all duration-300 ease-in-out min-h-[50vh] md:min-h-[80vh] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-xl overflow-hidden",
+    <DialogOverlay className="transition-opacity duration-300 bg-black/60 backdrop-blur-sm border-0 outline-none" style={{ border: 'none', outline: 'none' }} />    <DialogPrimitive.Content
+      ref={ref}      className={cn(
+        "fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-0 bg-black backdrop-blur-md p-0 border-0 outline-none shadow-none transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] overflow-hidden",
         className
       )}
       style={{ boxShadow: 'none', outline: 'none', border: 'none' }}
@@ -95,9 +93,9 @@ export default function AlbumViewerDialog({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [slideDirection, setSlideDirection] = useState<'none' | 'right' | 'left'>('none');  
-  const [imageLoaded, setImageLoaded] = useState(false);  const [thumbnailsScrollPosition, setThumbnailsScrollPosition] = useState(0);  
-  const [showInfoBar, setShowInfoBar] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);  const [thumbnailsScrollPosition, setThumbnailsScrollPosition] = useState(0);    const [showInfoBar, setShowInfoBar] = useState(true);
   const [showThumbnails, setShowThumbnails] = useState(true);
+  const [isKeyboardNavigation, setIsKeyboardNavigation] = useState(false); // 标记是否通过键盘导航切换图片
   const infoBarTimerRef = useRef<NodeJS.Timeout | null>(null);
   const thumbnailsTimerRef = useRef<NodeJS.Timeout | null>(null);
   const thumbnailsContainerRef = useRef<HTMLDivElement>(null);
@@ -136,11 +134,13 @@ export default function AlbumViewerDialog({
       // 设置自动隐藏定时器
       setupAutoHideTimers();
     }
-  }, [open, albumId]);useEffect(() => {    setImageLoaded(false);
+  }, [open, albumId]);  useEffect(() => {    setImageLoaded(false);
     
-    // 切换图片时同时显示信息栏和缩略图
-    setShowInfoBar(true);
-    setShowThumbnails(true);
+    // 只有在非键盘导航时才显示信息栏和缩略图
+    if (!isKeyboardNavigation) {
+      setShowInfoBar(true);
+      setShowThumbnails(true);
+    }
     
     // 重置缩放状态
     setScale(1);
@@ -154,8 +154,13 @@ export default function AlbumViewerDialog({
       clearTimeout(thumbnailsTimerRef.current);
     }
     
-    // 设置定时器，自动隐藏上下栏
-    setupAutoHideTimers();
+    // 只有在非键盘导航时才设置定时器
+    if (!isKeyboardNavigation) {
+      setupAutoHideTimers();
+    }
+    
+    // 重置键盘导航标志
+    setIsKeyboardNavigation(false);
   }, [currentImageIndex]);
   // 图片预加载
   useEffect(() => {
@@ -235,9 +240,35 @@ export default function AlbumViewerDialog({
       setSlideDirection('none');
     }, TRANSITION_DURATION);
   }, [images.length]);
-
   const prevImage = useCallback(() => {
     if (images.length === 0) return;
+    setImageLoaded(false);
+    setSlideDirection('left');
+    setCurrentImageIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
+    
+    // 重置过渡动画状态
+    setTimeout(() => {
+      setSlideDirection('none');
+    }, TRANSITION_DURATION);
+  }, [images.length]);
+
+  // 键盘导航专用函数 - 不会触发UI显示
+  const nextImageKeyboard = useCallback(() => {
+    if (images.length === 0) return;
+    setIsKeyboardNavigation(true);
+    setImageLoaded(false);
+    setSlideDirection('right');
+    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    
+    // 重置过渡动画状态
+    setTimeout(() => {
+      setSlideDirection('none');
+    }, TRANSITION_DURATION);
+  }, [images.length]);
+
+  const prevImageKeyboard = useCallback(() => {
+    if (images.length === 0) return;
+    setIsKeyboardNavigation(true);
     setImageLoaded(false);
     setSlideDirection('left');
     setCurrentImageIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
@@ -273,9 +304,9 @@ export default function AlbumViewerDialog({
       if (!open) return;
       
       if (e.key === "ArrowRight") {
-        nextImage();
+        nextImageKeyboard();
       } else if (e.key === "ArrowLeft") {
-        prevImage();
+        prevImageKeyboard();
       } else if (e.key === "Escape") {
         // 如果图片处于放大状态，先重置缩放而不是关闭对话框
         if (scale > 1.1) {
@@ -290,7 +321,7 @@ export default function AlbumViewerDialog({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, nextImage, prevImage, onClose, scale]);
+  }, [open, nextImageKeyboard, prevImageKeyboard, onClose, scale]);
   // 移动端触摸支持  // 计算两个触摸点之间的距离
   const calculateDistance = (touch1: React.Touch, touch2: React.Touch): number => {
     const dx = touch1.clientX - touch2.clientX;
@@ -631,7 +662,7 @@ export default function AlbumViewerDialog({
           <>            <Button
               variant="ghost"
               size="icon"
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 text-white hover:bg-black/40 rounded-full h-12 w-12 transition-opacity duration-200"              onClick={prevImage}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 text-white hover:bg-black/40 rounded-full h-12 w-12 transition-opacity duration-200"              onClick={prevImageKeyboard}
               onMouseEnter={() => {
                 // 显示上下栏
                 setShowInfoBar(true);
@@ -650,12 +681,11 @@ export default function AlbumViewerDialog({
               }}
             >
               <ChevronLeft className="h-7 w-7" />
-            </Button>
-            <Button
+            </Button>            <Button
               ref={rightArrowRef}
               variant="ghost"
               size="icon"
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 text-white hover:bg-black/40 rounded-full h-12 w-12 transition-opacity duration-200"              onClick={nextImage}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 text-white hover:bg-black/40 rounded-full h-12 w-12 transition-opacity duration-200"              onClick={nextImageKeyboard}
               onMouseEnter={() => {
                 // 显示上下栏
                 setShowInfoBar(true);
@@ -699,37 +729,35 @@ export default function AlbumViewerDialog({
       </>
     );
   };    return (    <Dialog open={open} onOpenChange={onClose} modal={true}>      
-      <CustomDialogContent className="max-w-6xl max-h-[90vh] md:max-h-[90vh] p-0 overflow-hidden flex flex-col bg-black sm:rounded-lg border-0 outline-none shadow-none" style={{ background: 'black', boxShadow: 'none', border: 'none' }}>
+      <CustomDialogContent className="w-screen h-screen max-w-none max-h-none p-0 overflow-hidden flex flex-col border-0 outline-none shadow-none sm:rounded-lg" style={{ height: '95vh', width: '95vw', boxShadow: 'none', border: 'none'}}>
         <DialogTitle className="sr-only">{albumTitle}</DialogTitle>
         <DialogDescription className="sr-only">{`${albumTitle} 相册图片浏览器`}</DialogDescription>
         {/* 全屏图片显示区 */}<div 
           ref={contentRef}          
           className="w-full overflow-hidden relative bg-black/90 flex-grow h-full touch-none select-none"
           style={{ 
-            height: '80vh', /* 使用明确的固定高度 */
+            height: '100vh', /* 使用完整视口高度 */
             WebkitTapHighlightColor: 'transparent', /* 移除移动端点击高亮 */
             WebkitTouchCallout: 'none' /* 防止iOS长按弹出菜单 */ 
-          }} 
+          }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchEnd}
           onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}        >
-          {error ? (
-            <div className="flex items-center justify-center h-full min-h-[50vh] md:min-h-[60vh] text-red-500">
+          onMouseLeave={handleMouseLeave}        >          {error ? (
+            <div className="flex items-center justify-center h-full w-full text-red-500">
               {error}
             </div>
           ) : images.length === 0 && !loading ? (
-            <div className="flex items-center justify-center h-full min-h-[50vh] md:min-h-[60vh] text-white">
+            <div className="flex items-center justify-center h-full w-full text-white">
               该相册没有图片
             </div>
           ) : (
-            <>              
-              <div 
+            <>                <div 
                 className="relative w-full h-full flex items-center justify-center" 
                 style={{ height: '100%', position: 'absolute', inset: 0 }}
-              >                {/* 当前图片 */}
+              >{/* 当前图片 */}
                 <div className="absolute inset-0 w-full h-full"> {/* 使用absolute定位并填满整个容器 */}
                   <div 
                       className={`relative w-full h-full flex items-center justify-center ${scale > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
@@ -742,8 +770,7 @@ export default function AlbumViewerDialog({
                         <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                       </div>
                     )}
-                      {/* 只有在有图片数据时才渲染Image组件 */}                    {currentImage && (
-                      <img
+                      {/* 只有在有图片数据时才渲染Image组件 */}                    {currentImage && (                      <img
                         src={getImageUrl(currentImage.file_path)}
                         alt={currentImage?.alt_text || currentImage?.original_file_name || '相册图片'}
                         className={cn(
@@ -800,11 +827,11 @@ export default function AlbumViewerDialog({
                             : getImageUrl(images[(currentImageIndex + 1) % images.length]?.file_path)
                         }
                         alt="Previous image"
-                        className="object-contain w-full h-full"
+                        className="object-cover w-full h-full"
                         style={{
                           width: '100%',
                           height: '100%',
-                          objectFit: 'contain'
+                          objectFit: 'cover'
                         }}
                       />
                     </div>

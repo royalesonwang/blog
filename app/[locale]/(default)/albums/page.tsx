@@ -123,7 +123,7 @@ export default function AlbumsPage() {
               Photo Gallery
             </h2>
             <p className="mb-8 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
-              A collection of memories captured in images. Browse through our albums and enjoy the visual journey of moments and experiences.
+              A collection of memories captured in images.
             </p>          </div>
           <div className="text-center text-muted-foreground mt-8">
             Loading...
