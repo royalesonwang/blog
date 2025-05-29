@@ -65,8 +65,8 @@ export default function ImageUploader({
   maxFiles = 10,  targetTable = "image_uploads",
   albumId,
   compressImages = true, // 默认启用压缩
-  maxImageWidth = 1440, // 与后端一致
-  maxImageHeight = 1440, // 与后端一致
+  maxImageWidth = 2160, // 与后端一致
+  maxImageHeight = 2160, // 与后端一致
   imageQuality = 1, // 默认质量100%
   addWatermarkByDefault = false, // 默认不添加水印
 }: ImageUploaderProps) {  const [files, setFiles] = useState<File[]>([]);
