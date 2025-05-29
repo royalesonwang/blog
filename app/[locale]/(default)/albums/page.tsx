@@ -66,9 +66,7 @@ export default function AlbumsPage() {
         const response = await fetch("/api/albums");
         const data = await response.json();
         
-        if (response.ok) {
-          console.log("获取到的相册数据:", data);
-          
+        if (response.ok) {          
           // 获取相册数据
           const albumsData = data.albums || [];
             // 如果有相册，为每个相册获取图片
@@ -82,16 +80,6 @@ export default function AlbumsPage() {
                     if (imageResponse.ok) {
                     // 将图片添加到相册中，添加调试信息
                     const images = imageData.images || [];
-                    console.log(`相册 ${album.id} 的图片数据:`, images);
-                    
-                    // 调试每张图片的路径信息
-                    images.forEach((img: AlbumImage, index: number) => {
-                      console.log(`图片 ${index + 1}:`, {
-                        file_path: img.file_path,
-                        generated_image_url: getImageUrl(img.file_path),
-                        generated_thumbnail_url: getThumbnailUrl(img.file_path)
-                      });
-                    });
                     
                     return {
                       ...album,
@@ -113,7 +101,6 @@ export default function AlbumsPage() {
               })
             );
             
-            console.log("带图片的相册数据:", albumsWithImages);
             setAlbums(albumsWithImages);
           } else {
             setAlbums(albumsData);
@@ -183,7 +170,6 @@ export default function AlbumsPage() {
   }
 
   // 过滤掉没有图片的相册，并为每个相册选择最新的一张图片作为封面
-  console.log("相册数据结构:", albums);
   const albumsWithCovers = albums
     .filter(album => album.images && Array.isArray(album.images) && album.images.length > 0)
     .map(album => {
@@ -208,14 +194,6 @@ export default function AlbumsPage() {
       };
     });
   
-  // 添加调试信息
-  console.log("处理后的相册封面URL:", albumsWithCovers.map(album => ({
-    albumId: album.id,
-    albumTitle: album.title,
-    coverImage_file_path: album.coverImage.file_path,
-    generated_thumbnail_url: getThumbnailUrl(album.coverImage.file_path),
-    generated_image_url: getImageUrl(album.coverImage.file_path)
-  })));
   // 如果没有包含图片的相册，显示提示信息  
   if (albumsWithCovers.length === 0) {
     return (
@@ -226,7 +204,7 @@ export default function AlbumsPage() {
               Photo Gallery
             </h2>
             <p className="mb-8 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
-              A collection of memories captured in images. Browse through our albums and enjoy the visual journey of moments and experiences.
+              A collection of memories captured in images.
             </p>          </div>
           <div className="text-center text-muted-foreground mt-8">
             没有包含图片的相册
@@ -248,10 +226,26 @@ export default function AlbumsPage() {
           <h2 className="mb-3 text-pretty text-3xl font-semibold md:mb-4 md:text-4xl lg:mb-6 lg:max-w-3xl lg:text-5xl">
             Photo Gallery
           </h2>
-          <p className="mb-8 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
-            A collection of memories captured in images. Browse through our albums and enjoy the visual journey of moments and experiences.
+          <p className="mb-4 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
+            A collection of memories captured in images.
           </p>
-        </div>      {albumGroups.map((group, groupIndex) => {
+        </div>
+        {/* 版权声明 */}
+        <div className="mt-4 pb-4 mb-4">
+          <div className="text-left text-sm text-muted-foreground max-w mx-auto">
+            <p>
+              These images are intended for personal use only. For reposting, please provide proper attribution. 
+              To obtain the original image or for commercial use, kindly contact: 
+              <a 
+                href="mailto:esonwang@outlook.com" 
+                className="ml-1 text-primary hover:underline"
+              >
+                esonwang@outlook.com
+              </a>.
+            </p>
+          </div>
+        </div>
+              {albumGroups.map((group, groupIndex) => {
         // 确定这组是偶数组还是奇数组
         const isOddGroup = groupIndex % 2 === 0; // 0,2,4...为奇数组（索引从0开始）
         const isFiveImages = group.length === 5; // 是否正好有5张图片
@@ -394,8 +388,7 @@ export default function AlbumsPage() {
           </div>
         );
       })}
-      
-      {/* 相册查看模态窗口 */}
+        {/* 相册查看模态窗口 */}
       {selectedAlbum && (
         <AlbumViewerDialog
           open={selectedAlbum !== null}
@@ -403,6 +396,7 @@ export default function AlbumsPage() {
           albumId={selectedAlbum.id}
           albumTitle={selectedAlbum.title}        />
       )}
+
       </div>
     </section>
   );
