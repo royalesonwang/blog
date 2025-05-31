@@ -39,7 +39,7 @@ export default async function About({
     name: "about",
     title: "About Eson Wang",
     label: "About",
-    description: "A graduate student at Shenzhen University, whose research direction is signal processing.",
+    description: "A undergraduate student at GDUT, whose major is Information Engineering.",
     image: {
       src: "/logo.png"
     },
@@ -50,9 +50,6 @@ export default async function About({
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-4">
                 2021.09 - 2025.06, School of Information Engineering, Guangdong University of Technology
-            </div>
-            <div className="flex items-center gap-4">
-                2025.09 - today, College of Electronics and Information Engineering, Shenzhen University
             </div>
           </div>
         ),
