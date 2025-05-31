@@ -215,7 +215,7 @@ export default function AlbumsPage() {
     const group = albumsWithCovers.slice(i, Math.min(i + 5, albumsWithCovers.length));
     albumGroups.push(group);
   }    return (
-    <section className="w-full py-8">
+    <section className="w-full py-16">
       <div className="container flex flex-col items-center lg:px-16">
         <div className="text-center">
           <h2 className="mb-3 text-pretty text-3xl font-semibold md:mb-4 md:text-4xl lg:mb-6 lg:max-w-3xl lg:text-5xl">
