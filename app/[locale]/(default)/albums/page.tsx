@@ -215,31 +215,17 @@ export default function AlbumsPage() {
     const group = albumsWithCovers.slice(i, Math.min(i + 5, albumsWithCovers.length));
     albumGroups.push(group);
   }    return (
-    <section className="w-full py-16">
+    <section className="w-full py-8">
       <div className="container flex flex-col items-center lg:px-16">
         <div className="text-center">
           <h2 className="mb-3 text-pretty text-3xl font-semibold md:mb-4 md:text-4xl lg:mb-6 lg:max-w-3xl lg:text-5xl">
             Photo Gallery
           </h2>
-          <p className="mb-4 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
+          <p className="mb-16 text-muted-foreground md:text-base lg:max-w-2xl lg:text-lg">
             A collection of memories captured in images.
           </p>
         </div>
-        {/* 版权声明 */}
-        <div className="mt-4 pb-4 mb-4">
-          <div className="text-left text-sm text-muted-foreground max-w mx-auto">
-            <p>
-              These images are intended for personal use only. For reposting, please provide proper attribution. 
-              To obtain the original image or for commercial use, kindly contact: 
-              <a 
-                href="mailto:esonwang@outlook.com" 
-                className="ml-1 text-primary hover:underline"
-              >
-                esonwang@outlook.com
-              </a>.
-            </p>
-          </div>
-        </div>
+        
               {albumGroups.map((group, groupIndex) => {
         // 确定这组是偶数组还是奇数组
         const isOddGroup = groupIndex % 2 === 0; // 0,2,4...为奇数组（索引从0开始）
@@ -382,7 +368,21 @@ export default function AlbumsPage() {
           albumId={selectedAlbum.id}
           albumTitle={selectedAlbum.title}        />
       )}
-
+      {/* 版权声明 */}
+        <div className="mt-8">
+          <div className="text-left text-sm text-muted-foreground max-w mx-auto">
+            <p>
+              These images are intended for personal use only. For reposting, please provide proper attribution. 
+              To obtain the original image or for commercial use, kindly contact: 
+              <a 
+                href="mailto:esonwang@outlook.com" 
+                className="ml-1 text-primary hover:underline"
+              >
+                esonwang@outlook.com
+              </a>.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );
